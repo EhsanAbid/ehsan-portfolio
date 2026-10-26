@@ -10,7 +10,8 @@ import { Lab } from "@/sections/Lab";
 import { Contact } from "@/sections/Contact";
 import { Cta, CustomCards, CustomText, Embed, Gallery, Quote } from "@/sections/Custom";
 import { Footer } from "@/sections/Footer";
-import type { Ctx } from "@/sections/shared";
+import { sectionAnchor, type Ctx } from "@/sections/shared";
+import { Universe } from "@/components/space/Universe";
 
 function renderSection(ctx: Ctx, s: Section): ReactNode {
   switch (s.type) {
@@ -69,6 +70,15 @@ export function SitePage({ site, preview = false, badge }: { site: Site; preview
       <a className="skip-link" href="#content">
         {site.copy.nav.skipToContent}
       </a>
+      <Universe
+        effects={site.effects}
+        colors={{ cyan: site.design.colors.cyan, violet: site.design.colors.violet }}
+        mapLabel={site.copy.nav.miniMapLabel}
+        stops={[
+          { id: "top", label: site.profile.shortName, color: site.design.colors.cyan },
+          ...sections.map((s) => ({ id: sectionAnchor(s), label: s.navLabel || s.title, color: s.planet.color })),
+        ]}
+      />
       {badge}
       <Hero ctx={ctx} />
       <main id="content">{sections.map((s) => renderSection(ctx, s))}</main>

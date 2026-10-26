@@ -297,3 +297,110 @@ a {
     opacity: 0.25;
   }
 }
+
+/* ───────── Universe layer ───────── */
+.space-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  animation: fade-in 1.2s var(--ease-expo) both;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+/* The canvas is fixed at z-index 0 and comes first in the DOM; hero, sections and footer
+   are position:relative, so they paint above it in DOM order. */
+
+/* Static star image for reduced motion / no WebGL: a few hundred dots drawn by CSS, zero JS. */
+.static-stars {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 72% 12%, #fff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 33% 62%, var(--cyan) 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 44%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 52% 84%, #fff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 8% 76%, var(--violet) 50%, transparent 51%),
+    radial-gradient(1px 1px at 62% 36%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 24% 40%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 94% 88%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 44% 8%, #fff 50%, transparent 51%);
+  background-size: 340px 340px;
+}
+/* Once the WebGL starfield runs, the static image fades out underneath it. */
+html:not(.no-webgl) .site-root:has(.space-canvas) .static-stars {
+  opacity: 0;
+  transition: opacity 1.5s;
+}
+
+/* Section planet: pure CSS sphere (radial gradients) + optional ring. GSAP drifts it with scroll. */
+.planet {
+  position: absolute;
+  z-index: 0;
+  top: 2rem;
+  right: -3rem;
+  width: calc(9rem * var(--s, 1));
+  aspect-ratio: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 32% 30%, color-mix(in srgb, var(--p) 35%, white) 0%, var(--p) 32%, color-mix(in srgb, var(--p) 30%, black) 72%, #000 100%);
+  box-shadow:
+    0 0 60px color-mix(in srgb, var(--p) 35%, transparent),
+    inset -18px -14px 40px rgba(0, 0, 0, 0.55);
+  opacity: 0.55;
+}
+.planet.has-ring::after {
+  content: "";
+  position: absolute;
+  inset: 38% -42%;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--ring) 70%, transparent);
+  transform: rotate(-18deg);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--ring) 40%, transparent);
+}
+@media (min-width: 768px) {
+  .planet {
+    right: 4%;
+    width: calc(13rem * var(--s, 1));
+    opacity: 0.8;
+  }
+}
+
+/* Per-section background moods (subtle, behind text). */
+.mood {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+[data-mood="nebula"] > .mood {
+  background: radial-gradient(60% 50% at 20% 40%, color-mix(in srgb, var(--violet) 12%, transparent), transparent 70%);
+}
+[data-mood="calm"] > .mood {
+  background: radial-gradient(55% 45% at 80% 30%, color-mix(in srgb, var(--cyan) 8%, transparent), transparent 70%);
+}
+[data-mood="warm"] > .mood {
+  background: radial-gradient(60% 50% at 70% 60%, color-mix(in srgb, var(--pink) 10%, transparent), transparent 70%);
+}
+[data-mood="aurora"] > .mood {
+  background: linear-gradient(170deg, transparent 20%, color-mix(in srgb, #34d399 7%, transparent) 45%, color-mix(in srgb, var(--cyan) 6%, transparent) 60%, transparent 80%);
+}
+
+/* Journey checkpoints light up while scrolling. */
+.journey-item .journey-dot {
+  transition:
+    box-shadow 0.6s var(--ease-expo),
+    border-color 0.6s;
+}
+.journey-item.lit .journey-dot {
+  border-color: var(--cyan);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--cyan) 60%, transparent);
+}
