@@ -15,6 +15,8 @@ import { Universe } from "@/components/space/Universe";
 import { Boot } from "@/components/boot/Boot";
 import { ContactForm } from "@/sections/ContactForm";
 import { Interactions } from "@/components/ui/Interactions";
+import { Magic } from "@/components/magic/Magic";
+import { magicProps } from "@/components/magic/magicData";
 
 function renderSection(ctx: Ctx, s: Section): ReactNode {
   switch (s.type) {
@@ -88,6 +90,7 @@ export function SitePage({ site, preview = false, badge }: { site: Site; preview
       <main id="content">{sections.map((s) => renderSection(ctx, s))}</main>
       <Footer ctx={ctx} />
       <Interactions tilt={site.effects.motion.tilt} />
+      <Magic {...magicProps(site)} />
     </div>
   );
 }

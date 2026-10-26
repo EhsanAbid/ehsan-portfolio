@@ -43,7 +43,7 @@ export function QuestCard({ quest: q, ctx }: { quest: Quest; ctx: Ctx }) {
         <Txt v={q.title} ctx={ctx} as="h3" className="text-xl font-semibold text-white" />
         <Txt v={q.summary} ctx={ctx} as="p" className="mt-2 text-sm text-muted" />
         {q.tags.length > 0 && (
-          <ul className="mt-4 flex flex-wrap gap-1.5" aria-label="Technologies">
+          <ul className="mt-4 flex flex-wrap gap-1.5" aria-label={ctx.site.copy.nav.technologies}>
             {q.tags.map((t) => (
               <li key={t} className="chip">{t}</li>
             ))}
@@ -78,7 +78,7 @@ export function Quests({ ctx, section }: SectionProps<"quests">) {
   const categories = [...new Set(quests.map((q) => q.category).filter(Boolean))];
   return (
     <SectionShell section={section}>
-      <QuestFilter categories={categories} allLabel={ctx.site.copy.quests.filterAll}>
+      <QuestFilter categories={categories} allLabel={ctx.site.copy.quests.filterAll} label={ctx.site.copy.nav.questFilter}>
         {quests.map((q) => (
           <div key={q.id} data-reveal data-category={q.category} className="flex">
             <QuestCard quest={q} ctx={ctx} />

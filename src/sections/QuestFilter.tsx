@@ -6,12 +6,12 @@ import { useState } from "react";
  * Filter tabs for the quest log. The cards are server-rendered; we only toggle their
  * `hidden` attribute, so the quest content is in the HTML for search engines and no-JS.
  */
-export function QuestFilter({ categories, allLabel, children }: { categories: string[]; allLabel: string; children: React.ReactNode }) {
+export function QuestFilter({ categories, allLabel, label, children }: { categories: string[]; allLabel: string; label: string; children: React.ReactNode }) {
   const [cat, setCat] = useState<string | null>(null);
   return (
     <div>
       {categories.length > 1 && (
-        <div role="tablist" aria-label="Filter quests" className="mb-6 flex flex-wrap gap-2" data-reveal>
+        <div role="tablist" aria-label={label} className="mb-6 flex flex-wrap gap-2" data-reveal>
           {[null, ...categories].map((c) => (
             <button
               key={c ?? "__all"}
