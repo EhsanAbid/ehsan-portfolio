@@ -1,26 +1,299 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens. Defaults below match the spec; on the public site <SiteStyles>
+ * overrides them at render time from the published design settings, so changing
+ * a colour in the admin needs no rebuild.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-deep: #05060f;
+  --panel: rgba(255, 255, 255, 0.05);
+  --panel-border: rgba(255, 255, 255, 0.1);
+  --cyan: #22d3ee;
+  --violet: #8b5cf6;
+  --pink: #f472b6;
+  --gold: #fbbf24;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --radius: 16px;
+  --blur: 14px;
+  --space: 1;
+  --sky-top: #05060f;
+  --sky-bottom: #0b1026;
+  --sky-glow: #8b5cf6;
+  --font-heading: var(--f-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--f-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-code: var(--f-jetbrains), ui-monospace, monospace;
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg-deep: var(--bg-deep);
+  --color-panel: var(--panel);
+  --color-cyan: var(--cyan);
+  --color-violet: var(--violet);
+  --color-pink: var(--pink);
+  --color-gold: var(--gold);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-code);
+  --radius-ui: var(--radius);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--bg-deep);
+  color-scheme: dark;
+  scroll-padding-top: 4rem;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-deep);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--cyan) 40%, transparent);
+  color: #fff;
+}
+
+/* Visible focus ring for keyboard users everywhere. */
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+a {
+  color: inherit;
+}
+
+/* ───────── Public site building blocks ───────── */
+
+.site-root {
+  position: relative;
+  min-height: 100vh;
+  background:
+    radial-gradient(120% 80% at 50% -10%, color-mix(in srgb, var(--sky-glow) 22%, transparent), transparent 60%),
+    linear-gradient(180deg, var(--sky-top), var(--sky-bottom) 70%, var(--bg-deep));
+  background-attachment: fixed;
+  overflow-x: clip;
+}
+
+.glass {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(var(--blur));
+  -webkit-backdrop-filter: blur(var(--blur));
+}
+
+.section {
+  position: relative;
+  padding-block: calc(5rem * var(--space));
+  padding-inline: 1rem;
+}
+@media (min-width: 768px) {
+  .section {
+    padding-block: calc(7.5rem * var(--space));
+    padding-inline: 2rem;
+  }
+}
+.section-inner {
+  margin-inline: auto;
+  max-width: 72rem;
+}
+
+.eyebrow {
+  font-family: var(--font-code);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+.mono {
+  font-family: var(--font-code);
+}
+
+/* Buttons — three admin-selectable styles via data-btn on <body>. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px; /* touch target */
+  padding: 0.65rem 1.25rem;
+  border-radius: calc(var(--radius) * 0.75);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition:
+    transform 0.4s var(--ease-expo),
+    box-shadow 0.4s var(--ease-expo),
+    background-color 0.3s;
+  will-change: transform;
+}
+.btn-primary {
+  background: var(--cyan);
+  color: #04121a;
+}
+.btn-ghost {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  color: var(--text);
+}
+.btn-ghost:hover {
+  border-color: color-mix(in srgb, var(--cyan) 60%, transparent);
+}
+[data-btn="glow"] .btn-primary {
+  box-shadow: 0 0 24px color-mix(in srgb, var(--cyan) 45%, transparent);
+}
+[data-btn="glow"] .btn-primary:hover {
+  box-shadow: 0 0 40px color-mix(in srgb, var(--cyan) 70%, transparent);
+}
+[data-btn="outline"] .btn-primary {
+  background: transparent;
+  color: var(--cyan);
+  border: 1.5px solid var(--cyan);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-family: var(--font-code);
+  font-size: 0.72rem;
+  border: 1px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--muted);
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  background: var(--cyan);
+  color: #04121a;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.skip-link:focus {
+  top: 1rem;
+}
+
+.rich p + p,
+.rich p + ul,
+.rich ul + p,
+.rich p + ol {
+  margin-top: 0.85em;
+}
+.rich ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+.rich ol {
+  list-style: decimal;
+  padding-left: 1.25rem;
+}
+.rich a {
+  color: var(--cyan);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.rich strong {
+  color: #fff;
+}
+
+.todo {
+  outline: 1px dashed color-mix(in srgb, var(--gold) 70%, transparent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Entrance reveal: content is visible by default (no-JS/readability first);
+   JS adds .reveal-ready to animate it in. */
+.reveal-ready [data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+}
+.reveal-ready [data-reveal].revealed {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity var(--reveal-ms, 700ms) var(--ease-expo),
+    transform var(--reveal-ms, 700ms) var(--ease-expo);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal-ready [data-reveal] {
+    transform: none;
+  }
+}
+
+/* ───────── Ambient loops (all slower than 1 Hz, off for reduced motion) ───────── */
+.orbit-ring {
+  animation: orbit 40s linear infinite;
+}
+.orbit-moon-inner {
+  display: inline-block;
+  animation: orbit 40s linear infinite reverse; /* keeps the icons upright */
+}
+@keyframes orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.signal-ring {
+  position: absolute;
+  inset: 20%;
+  border-radius: 999px;
+  border: 1.5px solid var(--cyan);
+  opacity: 0;
+  animation: signal 3s var(--ease-expo) infinite;
+}
+@keyframes signal {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit-ring,
+  .orbit-moon-inner,
+  .signal-ring {
+    animation: none;
+  }
+  .signal-ring {
+    opacity: 0.25;
+  }
 }

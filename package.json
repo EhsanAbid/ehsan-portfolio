@@ -11,7 +11,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "tsx src/db/seed.ts",
+    "db:seed": "tsx --conditions=react-server src/db/seed.ts",
     "db:local": "node scripts/local-db.mjs",
     "db:check": "tsx scripts/db-check.ts"
   },
