@@ -13,7 +13,11 @@
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx --conditions=react-server src/db/seed.ts",
     "db:local": "node scripts/local-db.mjs",
-    "db:check": "tsx scripts/db-check.ts"
+    "db:check": "tsx scripts/db-check.ts",
+    "dev:local": "node scripts/dev-local.mjs",
+    "db:migrate:prod": "tsx src/db/migrate.ts --env=.env.production.local",
+    "db:seed:prod": "tsx --conditions=react-server src/db/seed.ts --env=.env.production.local",
+    "budget": "node scripts/budget.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

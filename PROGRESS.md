@@ -11,9 +11,10 @@ Tick a phase only after `npm run build` passes, its "done when" is self-checked 
 - [x] Phase 6 · Magic layer — cursor, magnetic buttons, achievements, terminal, Konami, shooting stars, sound
 - [x] Phase 7 · Studio — design, effects, game, SEO, inbox, advanced, account
 - [x] Phase 8 · Optimise + secure — quality tiers, caching, a11y, SEO, security, Lighthouse
-- [ ] Phase 9 · Deploy prep — DEPLOY.md, ADMIN_GUIDE.md, production seed, final review
+- [x] Phase 9 · Deploy prep — DEPLOY.md, ADMIN_GUIDE.md, production seed, final review
 
 ## Notes
 - Phase 0: no Neon account yet → local dev uses PGlite behind a Neon-HTTP-compatible shim (`npm run db:local`, scripts/local-db.mjs). Same driver/code path as production; swap DATABASE_URL to Neon later. Admin email: ehsanahmedabid@gmail.com (temporary local password in .env.local).
 - Extra deps approved: tsx, bcryptjs, server-only, lighthouse, @electric-sql/pglite (dev).
 - Phase 8: Lighthouse mobile 89–91 / desktop 97, A11y·BP·SEO 100; budgets met; 0 DB queries per visit. Details: lighthouse/REPORT.md. Simulated mobile LCP ~3.1 s (observed 0.35 s) is the one number above target.
+- Phase 9: DEPLOY.md, ADMIN_GUIDE.md, README; `db:migrate:prod` / `db:seed:prod` (read `.env.production.local`); `npm run dev:local`. Branch renamed to `main`. Waiting for Ehsan to create Neon/GitHub/Vercel and push.

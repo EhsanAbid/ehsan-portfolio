@@ -7,7 +7,11 @@
 //   --reset-content replace the published content with fresh defaults (old one is archived)
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
-if (existsSync(".env.local") && !process.env.SKIP_ENV_FILE) process.loadEnvFile(".env.local");
+// Which env file to read: --env=.env.production.local for the live (Neon main) database.
+const envArg = process.argv.find((a) => a.startsWith("--env="));
+const envFile = envArg ? envArg.slice(6) : ".env.local";
+if (envArg && !existsSync(envFile)) throw new Error(`${envFile} not found (see DEPLOY.md)`);
+if (existsSync(envFile)) process.loadEnvFile(envFile);
 
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";

@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ehsan.exe — The Level-Up Universe
 
-## Getting Started
+Personal portfolio of **Ehsan Ahmed Abid** (BSc CSE, East West University) with an admin panel ("Mission Control").
+The visitor boots Ehsan like a program, watches a Big Bang form his name from particles, and travels through a
+universe where skills are stars, projects are quests and achievements are hidden everywhere.
 
-First, run the development server:
+**Stack (all free):** Next.js 16 (App Router, Cache Components) · TypeScript · Tailwind CSS 4 · three.js + react-three-fiber ·
+GSAP + Lenis · Neon Postgres + Drizzle · Zod · jose + bcrypt · TipTap · dnd-kit · sharp · Vercel.
+
+## Quick start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev:local      # local practice database + dev server (no account needed)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Site: <http://localhost:3000> · Admin: <http://localhost:3000/admin> (credentials in `.env.local`)
+- Going live: **[DEPLOY.md](DEPLOY.md)** · Using the admin: **[ADMIN_GUIDE.md](ADMIN_GUIDE.md)**
+- Spec summary + rules for Claude Code: [CLAUDE.md](CLAUDE.md) · Progress: [PROGRESS.md](PROGRESS.md) · Performance: [lighthouse/REPORT.md](lighthouse/REPORT.md)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | What it does |
+|---|---|
+| `npm run dev` | Dev server (uses `DATABASE_URL` from `.env.local`) |
+| `npm run dev:local` | Local PGlite database + dev server together |
+| `npm run build` / `npm run start` | Production build / server |
+| `npm run db:migrate` / `db:seed` | Create tables / admin + first content (`.env.local`) |
+| `npm run db:migrate:prod` / `db:seed:prod` | Same for the live database (`.env.production.local`) |
+| `npm run db:generate` | New migration after changing `src/db/schema.ts` |
+| `npm run budget` | Performance budget check against a running production server |
+| `npm run lint` / `typecheck` | Code checks |
 
-## Learn More
+## How it fits together
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/schema/site.ts      ← one Zod schema describes the WHOLE site (single source of truth)
+        │  admin forms are generated from it (components/admin/SchemaForm)
+        ▼
+Neon: site_versions     ← draft / published / archived JSON documents
+        │  'use cache' + cacheTag('site')  → static page, 0 DB queries per visit
+        ▼
+src/components/site/SitePage.tsx  ← renders sections; client "islands" add the magic lazily
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Interesting code to read (commented for learning): `src/components/hero/HeroParticles.tsx` (spring physics),
+`src/components/space/Starfield.tsx` (GPU shader warp), `src/lib/fps.ts` (adaptive quality controller),
+`src/lib/auth.ts` (sessions), `src/lib/site.ts` + `src/lib/publish.ts` (caching and publishing),
+`src/components/admin/schemaUtils.ts` (schema-driven forms).

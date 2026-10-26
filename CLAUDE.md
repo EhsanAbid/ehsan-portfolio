@@ -153,3 +153,12 @@ src/sections/ About Skills Quests Journey Lab Contact Footer Custom*
 - `cacheComponents: true` + `partialPrefetching: true`. Runtime reads (`cookies()`, `headers()`, uncached DB) must sit inside `<Suspense>` or call `connection()`; cached reads use `'use cache'` + `cacheTag` + `cacheLife`.
 - `middleware` is renamed `proxy` (`src/proxy.ts`). `revalidateTag(tag, 'max')` needs 2 args; `updateTag(tag)` only inside server actions.
 - Docs live in `node_modules/next/dist/docs/` — read before using an unfamiliar API.
+
+## Operations (as built)
+- Local DB without Neon: `npm run dev:local` (PGlite behind a Neon-HTTP-compatible shim, `scripts/local-db.mjs`, data in `.pglite/`). Same driver/code path as production. With a Neon URL in `.env.local`, use `npm run dev`.
+- Migrations: edit `src/db/schema.ts` → `npm run db:generate` → `npm run db:migrate` (+ `db:migrate:prod` for live). Seed: `db:seed` / `db:seed:prod` (`--reset-admin`, `--reset-content`).
+- New site fields: add to `src/schema/site.ts` with a default + `.meta({label, widget})` → appears in admin automatically; old saved versions get the default on parse.
+- Public page = static shell from `getPublishedSite()` (`'use cache'`, tag `site`); publish → `updateTag('site')`. Admin/preview are dynamic behind `<Suspense>`.
+- Client islands load lazily: 3D (`SpaceCanvas`, after boot; phones on first touch/scroll by default), magic layer (`MagicLazy`, idle), terminal window (first open), GSAP/Lenis (desktop only).
+- Perf check: `npm run build && npm run start`, then `npm run budget` and Lighthouse (see `lighthouse/REPORT.md`).
+- Docs for Ehsan: DEPLOY.md, ADMIN_GUIDE.md, README.md.
