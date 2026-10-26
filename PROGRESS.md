@@ -9,7 +9,7 @@ Tick a phase only after `npm run build` passes, its "done when" is self-checked 
 - [x] Phase 4 · First impression — boot, Big Bang particle name, typewriter, HUD
 - [x] Phase 5 · Signature sections — constellation, quests, journey orbit, lab, signal station, footer, custom types
 - [x] Phase 6 · Magic layer — cursor, magnetic buttons, achievements, terminal, Konami, shooting stars, sound
-- [ ] Phase 7 · Studio — design, effects, game, SEO, inbox, advanced, account
+- [x] Phase 7 · Studio — design, effects, game, SEO, inbox, advanced, account
 - [ ] Phase 8 · Optimise + secure — quality tiers, caching, a11y, SEO, security, Lighthouse
 - [ ] Phase 9 · Deploy prep — DEPLOY.md, ADMIN_GUIDE.md, production seed, final review
 

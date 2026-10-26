@@ -26,12 +26,13 @@ async function Preview({ searchParams }: Pick<PageProps<"/preview">, "searchPara
   const version = Number.isInteger(id) && id > 0 ? await getVersion(id) : null;
   const site = version ? version.site : (await getWorkingSite()).site;
   const label = version ? `Preview · version #${version.id} (${version.status})` : "Preview mode · draft";
+  const embedded = sp.embed === "1"; // inside the admin's live-preview frame
   return (
     <SitePage
       site={site}
       preview
       badge={
-        <div className="preview-badge" role="status">
+        embedded ? null : <div className="preview-badge" role="status">
           <span>● {label}</span>
           <a href="/admin">Back to admin</a>
         </div>

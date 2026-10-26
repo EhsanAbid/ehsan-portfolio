@@ -16,7 +16,7 @@ const csp = [
   "font-src 'self' data:",
   "connect-src 'self'",
   "media-src 'self'",
-  "frame-src https://www.youtube-nocookie.com https://player.vimeo.com",
+  "frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com",
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
@@ -51,7 +51,14 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["three", "@react-three/drei", "gsap"],
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    // /preview may be framed by our own admin (live preview); everything else may not be framed at all.
+    const previewHeaders = securityHeaders
+      .filter((h) => h.key !== "X-Frame-Options")
+      .map((h) => (h.key === "Content-Security-Policy" ? { ...h, value: h.value.replace("frame-ancestors 'none'", "frame-ancestors 'self'") } : h));
+    return [
+      { source: "/((?!preview).*)", headers: securityHeaders },
+      { source: "/preview", headers: [...previewHeaders, { key: "X-Frame-Options", value: "SAMEORIGIN" }] },
+    ];
   },
 };
 

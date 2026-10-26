@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { siteSchema, type Site } from "@/schema/site";
 import { saveAreaAction } from "@/app/admin/actions";
 import { SchemaField } from "./SchemaForm";
@@ -19,6 +19,8 @@ export function AreaEditor<K extends keyof Site>({
   initial,
   only,
   onValue,
+  onSaved,
+  toolbar,
 }: {
   area: K;
   initial: Site[K];
@@ -26,6 +28,10 @@ export function AreaEditor<K extends keyof Site>({
   only?: string[];
   /** Notified on every change (used by live previews). */
   onValue?: (v: Site[K]) => void;
+  /** Called after each successful save (live preview reloads). */
+  onSaved?: () => void;
+  /** Extra controls above the form that can change the whole value (e.g. design presets). */
+  toolbar?: (value: Site[K], change: (v: Site[K]) => void) => ReactNode;
 }) {
   const [value, setValue] = useState<Site[K]>(initial);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
@@ -35,6 +41,7 @@ export function AreaEditor<K extends keyof Site>({
   const schema = siteSchema.shape[area];
 
   async function save(v: Site[K]) {
+    timer.current = null;
     const local = schema.safeParse(v);
     if (!local.success) {
       setStatus({
@@ -50,6 +57,7 @@ export function AreaEditor<K extends keyof Site>({
     if (res.ok) {
       setStatus({ kind: "saved" });
       if ("changes" in res) setChanges(res.changes as number);
+      onSaved?.();
     } else setStatus({ kind: "error", message: res.error, issues: "issues" in res ? res.issues : undefined });
   }
 
@@ -99,6 +107,7 @@ export function AreaEditor<K extends keyof Site>({
           ))}
         </ul>
       ) : null}
+      {toolbar && <ToolbarSlot render={toolbar} value={value} change={change} />}
       {shown ? (
         <div className="grid gap-4">
           {shown.map(({ k, s }) => (
@@ -116,4 +125,8 @@ export function AreaEditor<K extends keyof Site>({
       )}
     </div>
   );
+}
+
+function ToolbarSlot<V>({ render, value, change }: { render: (v: V, c: (v: V) => void) => ReactNode; value: V; change: (v: V) => void }) {
+  return <>{render(value, change)}</>;
 }

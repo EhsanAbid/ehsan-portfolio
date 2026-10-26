@@ -165,3 +165,45 @@ export async function listMediaAction() {
   const { listMedia } = await import("@/lib/storage");
   return (await listMedia()).map((m) => ({ ...m, createdAt: m.createdAt.toISOString() }));
 }
+
+/* ───────── Inbox ───────── */
+
+export async function updateMessageAction(id: number, patch: { read?: boolean; spam?: boolean }) {
+  return guard(async () => {
+    const { getDb, schema } = await import("@/db/client");
+    const { eq } = await import("drizzle-orm");
+    const clean = z.object({ read: z.boolean().optional(), spam: z.boolean().optional() }).parse(patch);
+    await getDb().update(schema.messages).set(clean).where(eq(schema.messages.id, z.number().int().parse(id)));
+    return { ok: true as const };
+  });
+}
+
+export async function deleteMessageAction(id: number) {
+  return guard(async () => {
+    const { getDb, schema } = await import("@/db/client");
+    const { eq } = await import("drizzle-orm");
+    await getDb().delete(schema.messages).where(eq(schema.messages.id, z.number().int().parse(id)));
+    return { ok: true as const };
+  });
+}
+
+/* ───────── Account ───────── */
+
+export async function changePasswordAction(current: string, next: string) {
+  try {
+    const admin = await assertAdmin();
+    const { changePassword } = await import("@/lib/auth");
+    return await changePassword(admin.id, String(current).slice(0, 200), String(next).slice(0, 200));
+  } catch {
+    return { ok: false as const, error: "Your session expired — please sign in again." };
+  }
+}
+
+export async function signOutEverywhereAction() {
+  const admin = await assertAdmin().catch(() => null);
+  if (admin) {
+    const { signOutEverywhere } = await import("@/lib/auth");
+    await signOutEverywhere(admin.id);
+  }
+  redirect("/admin/login");
+}
