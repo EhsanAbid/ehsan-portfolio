@@ -4,7 +4,7 @@ Tick a phase only after `npm run build` passes, its "done when" is self-checked 
 
 - [x] Phase 0 · Foundation — Next + TS + Tailwind, deps, folders, CLAUDE.md, git, Drizzle schema + first migration in Neon
 - [x] Phase 1 · Content model — Zod schema, seed, public site from published version
-- [ ] Phase 2 · Admin core — auth, sections, content, media, draft → preview → publish, history, export/import
+- [x] Phase 2 · Admin core — auth, sections, content, media, draft → preview → publish, history, export/import
 - [ ] Phase 3 · Universe — starfield, warp, planets, mini-map, sky themes, smooth scroll + reveals
 - [ ] Phase 4 · First impression — boot, Big Bang particle name, typewriter, HUD
 - [ ] Phase 5 · Signature sections — constellation, quests, journey orbit, lab, signal station, footer, custom types

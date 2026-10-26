@@ -21,7 +21,13 @@ const PORT = Number(process.env.LOCAL_DB_PORT ?? 4444);
 const rawText = {};
 for (let oid = 1; oid < 16384; oid++) rawText[oid] = (value) => value;
 
-const db = await PGlite.create(process.env.LOCAL_DB_DIR ?? ".pglite", { parsers: rawText });
+// Neon receives bytea parameters as "\x0a1b…" hex text; PGlite's default bytea serializer
+// only accepts Uint8Array, so pass hex strings through unchanged (OID 17 = bytea).
+const serializers = {
+  17: (v) => (typeof v === "string" ? v : "\\x" + Buffer.from(v).toString("hex")),
+};
+
+const db = await PGlite.create(process.env.LOCAL_DB_DIR ?? ".pglite", { parsers: rawText, serializers });
 
 let queue = Promise.resolve();
 /** PGlite is single-connection: run requests one after another. */
