@@ -2,6 +2,7 @@ import type { Quest } from "@/schema/site";
 import { MediaImage } from "@/components/ui/MediaImage";
 import { filled } from "@/lib/todo";
 import { SectionShell, Txt, type Ctx, type SectionProps } from "./shared";
+import { QuestFilter } from "./QuestFilter";
 
 export const questStatusLabel = (ctx: Ctx, s: Quest["status"]) =>
   ({ completed: ctx.site.copy.quests.completed, "in-progress": ctx.site.copy.quests.inProgress, planned: ctx.site.copy.quests.planned })[s];
@@ -72,19 +73,18 @@ export function QuestCard({ quest: q, ctx }: { quest: Quest; ctx: Ctx }) {
 }
 
 /** Scene 5 — Quest Log. Filter tabs + tilt are progressive enhancements added on the client. */
-export function Quests({ ctx, section, children }: SectionProps<"quests"> & { children?: React.ReactNode }) {
-  const quests = ctx.site.quests;
+export function Quests({ ctx, section }: SectionProps<"quests">) {
+  const quests = ctx.site.quests.filter((q) => filled(q.title) || ctx.preview);
+  const categories = [...new Set(quests.map((q) => q.category).filter(Boolean))];
   return (
     <SectionShell section={section}>
-      {children ?? (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {quests.map((q) => (
-            <div key={q.id} data-reveal className="flex">
-              <QuestCard quest={q} ctx={ctx} />
-            </div>
-          ))}
-        </div>
-      )}
+      <QuestFilter categories={categories} allLabel={ctx.site.copy.quests.filterAll}>
+        {quests.map((q) => (
+          <div key={q.id} data-reveal data-category={q.category} className="flex">
+            <QuestCard quest={q} ctx={ctx} />
+          </div>
+        ))}
+      </QuestFilter>
     </SectionShell>
   );
 }

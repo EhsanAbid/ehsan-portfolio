@@ -1,10 +1,12 @@
 import { SectionShell, Txt, type SectionProps } from "./shared";
+import { LabScopes } from "./LabScopes";
 
 /** Scene 7 — The Lab: a monitoring console. The oscilloscope canvas is a client enhancement. */
 export function Lab({ ctx, section }: SectionProps<"lab">) {
   const l = ctx.site.copy.lab;
   return (
     <SectionShell section={section}>
+      <LabScopes />
       <div className="grid gap-5 md:grid-cols-2">
         {ctx.site.lab.map((t) => (
           <article key={t.id} className="glass p-5" data-reveal data-lab={t.id} data-progress={t.progress}>

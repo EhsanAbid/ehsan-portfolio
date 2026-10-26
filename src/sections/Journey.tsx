@@ -1,4 +1,5 @@
 import { SectionShell, Txt, type SectionProps } from "./shared";
+import { JourneyPath } from "./JourneyPath";
 
 /**
  * Scene 6 — Journey Orbit. Checkpoints sit on a curved path (CSS curve on desktop,
@@ -10,17 +11,18 @@ export function Journey({ ctx, section }: SectionProps<"journey">) {
   return (
     <SectionShell section={section}>
       <ol className="journey relative mx-auto max-w-3xl">
-        <span aria-hidden className="journey-path absolute top-2 bottom-2 left-[1.15rem] w-px bg-gradient-to-b from-cyan via-violet to-transparent md:left-1/2" />
+        <span aria-hidden className="journey-path absolute top-2 bottom-2 left-[1.15rem] w-px bg-gradient-to-b from-cyan via-violet to-transparent md:hidden" />
+        <JourneyPath />
         {items.map((c, i) => (
           <li
             key={c.id}
             data-checkpoint={c.id}
             data-reveal
-            className={`journey-item relative mb-8 grid grid-cols-[2.3rem_1fr] gap-4 md:grid-cols-2 md:gap-12 ${i % 2 ? "md:[&>div]:col-start-2" : "md:[&>div]:text-right"}`}
+            className={`journey-item relative mb-8 grid grid-cols-[2.3rem_1fr] gap-4 md:grid-cols-2 md:gap-12 ${i % 2 ? "md:[&>div]:col-start-2 md:[&>div]:ml-10" : "md:[&>div]:mr-10 md:[&>div]:text-right"}`}
           >
             <span
               aria-hidden
-              className={`journey-dot relative z-10 flex size-9 items-center justify-center rounded-full border text-base md:absolute md:left-1/2 md:-translate-x-1/2 ${c.locked ? "border-white/15 bg-white/5 text-muted" : "border-cyan/60 bg-bg-deep"}`}
+              className={`journey-dot relative z-10 flex size-9 items-center justify-center rounded-full border text-base md:absolute md:-translate-x-1/2 ${i % 2 ? "md:left-[calc(50%+2.5rem)]" : "md:left-[calc(50%-2.5rem)]"} ${c.locked ? "border-white/15 bg-white/5 text-muted" : "border-cyan/60 bg-bg-deep"}`}
             >
               {c.locked ? "?" : c.icon}
             </span>

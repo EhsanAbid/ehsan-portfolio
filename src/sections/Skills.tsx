@@ -1,6 +1,7 @@
 import type { Skill } from "@/schema/site";
 import { filled } from "@/lib/todo";
 import { SectionShell, type SectionProps } from "./shared";
+import { Constellation } from "./Constellation";
 
 const STATUS_STYLE: Record<Skill["status"], string> = {
   mastered: "border-cyan/50 text-cyan",
@@ -12,15 +13,15 @@ const STATUS_STYLE: Record<Skill["status"], string> = {
  * Scene 4 — Skill Constellation. This server-rendered list is the accessible, always-readable
  * version; the interactive star map (Phase 5) is drawn above it as decoration.
  */
-export function Skills({ ctx, section, children }: SectionProps<"skills"> & { children?: React.ReactNode }) {
+export function Skills({ ctx, section }: SectionProps<"skills">) {
   const { site } = ctx;
   const l = site.copy.skills;
   const label = { mastered: l.mastered, learning: l.learning, locked: l.locked };
 
   return (
     <SectionShell section={section}>
-      {children}
-      <h3 className="sr-only">{l.listHeading}</h3>
+      <Constellation branches={site.skills.branches} skills={site.skills.items} labels={l} />
+      <h3 className="mono mb-4 text-xs tracking-widest text-muted uppercase">{l.listHeading}</h3>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-skill-list>
         {site.skills.branches.map((b) => {
           const items = site.skills.items.filter((s) => s.branchId === b.id);

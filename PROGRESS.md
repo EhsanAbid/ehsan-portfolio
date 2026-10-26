@@ -7,7 +7,7 @@ Tick a phase only after `npm run build` passes, its "done when" is self-checked 
 - [x] Phase 2 · Admin core — auth, sections, content, media, draft → preview → publish, history, export/import
 - [x] Phase 3 · Universe — starfield, warp, planets, mini-map, sky themes, smooth scroll + reveals
 - [x] Phase 4 · First impression — boot, Big Bang particle name, typewriter, HUD
-- [ ] Phase 5 · Signature sections — constellation, quests, journey orbit, lab, signal station, footer, custom types
+- [x] Phase 5 · Signature sections — constellation, quests, journey orbit, lab, signal station, footer, custom types
 - [ ] Phase 6 · Magic layer — cursor, magnetic buttons, achievements, terminal, Konami, shooting stars, sound
 - [ ] Phase 7 · Studio — design, effects, game, SEO, inbox, advanced, account
 - [ ] Phase 8 · Optimise + secure — quality tiers, caching, a11y, SEO, security, Lighthouse

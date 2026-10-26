@@ -13,6 +13,8 @@ import { Footer } from "@/sections/Footer";
 import { sectionAnchor, type Ctx } from "@/sections/shared";
 import { Universe } from "@/components/space/Universe";
 import { Boot } from "@/components/boot/Boot";
+import { ContactForm } from "@/sections/ContactForm";
+import { Interactions } from "@/components/ui/Interactions";
 
 function renderSection(ctx: Ctx, s: Section): ReactNode {
   switch (s.type) {
@@ -27,7 +29,7 @@ function renderSection(ctx: Ctx, s: Section): ReactNode {
     case "lab":
       return <Lab key={s.id} ctx={ctx} section={s} />;
     case "contact":
-      return <Contact key={s.id} ctx={ctx} section={s} />;
+      return <Contact key={s.id} ctx={ctx} section={s} form={<ContactForm labels={ctx.site.copy.contact} />} />;
     case "text":
       return <CustomText key={s.id} ctx={ctx} section={s} />;
     case "cards":
@@ -85,6 +87,7 @@ export function SitePage({ site, preview = false, badge }: { site: Site; preview
       <Hero ctx={ctx} />
       <main id="content">{sections.map((s) => renderSection(ctx, s))}</main>
       <Footer ctx={ctx} />
+      <Interactions tilt={site.effects.motion.tilt} />
     </div>
   );
 }
