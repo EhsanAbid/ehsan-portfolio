@@ -25,3 +25,10 @@ export function on<K extends keyof EventMap>(name: K, fn: (detail: EventMap[K]) 
   window.addEventListener(`ehsan:${name}`, h);
   return () => window.removeEventListener(`ehsan:${name}`, h);
 }
+
+/** Is the boot overlay still running? (set by the inline boot script, finished by BootControl) */
+export function bootRunning() {
+  if (typeof window === "undefined") return false;
+  if ((window as unknown as { __bootDone?: boolean }).__bootDone) return false;
+  return ["full", "mini"].includes(document.documentElement.dataset.boot ?? "");
+}

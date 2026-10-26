@@ -73,6 +73,20 @@ export async function startMotion(opts: { smoothScroll: boolean; revealMs: numbe
     cleanups.push(() => t.kill());
   });
 
+  // Sections use content-visibility, so their real heights arrive as they render: when the page
+  // height changes, recompute every ScrollTrigger position (debounced).
+  let refreshTimer: ReturnType<typeof setTimeout>;
+  const ro = new ResizeObserver(() => {
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(() => ScrollTrigger.refresh(), 200);
+  });
+  const main = document.getElementById("content");
+  if (main) ro.observe(main);
+  cleanups.push(() => {
+    ro.disconnect();
+    clearTimeout(refreshTimer);
+  });
+
   return () => {
     cleanups.forEach((c) => c());
     document.documentElement.classList.remove("reveal-ready");
@@ -87,4 +101,38 @@ export function scrollToTarget(target: string | HTMLElement) {
     const el = typeof target === "string" ? document.querySelector(target) : target;
     el?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   }
+}
+
+/**
+ * Lite version for touch devices: the same reveals and lit checkpoints with a plain
+ * IntersectionObserver — no GSAP/Lenis download or start-up cost on phones.
+ * (Planets stay where they are; scroll-scrubbed parallax is a desktop extra.)
+ */
+export function startLiteMotion(opts: { revealMs: number }) {
+  const vh = window.innerHeight;
+  const items = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
+  items.forEach((el) => {
+    if (el.getBoundingClientRect().top < vh * 0.95) el.classList.add("revealed");
+  });
+  document.documentElement.style.setProperty("--reveal-ms", `${opts.revealMs}ms`);
+  document.documentElement.classList.add("reveal-ready");
+  const reveal = new IntersectionObserver(
+    (entries) =>
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        e.target.classList.add("revealed");
+        reveal.unobserve(e.target);
+      }),
+    { rootMargin: "0px 0px -8% 0px" },
+  );
+  items.filter((el) => !el.classList.contains("revealed")).forEach((el) => reveal.observe(el));
+  const lit = new IntersectionObserver((entries) => entries.forEach((e) => e.target.classList.toggle("lit", e.isIntersecting || e.boundingClientRect.top < 0)), {
+    rootMargin: "0px 0px -35% 0px",
+  });
+  document.querySelectorAll("[data-checkpoint]").forEach((el) => lit.observe(el));
+  return () => {
+    reveal.disconnect();
+    lit.disconnect();
+    document.documentElement.classList.remove("reveal-ready");
+  };
 }

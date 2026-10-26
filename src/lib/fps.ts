@@ -41,6 +41,9 @@ export function initialTier(): Tier {
   else if (mem >= 4) score += 1;
   if (touch) score -= 1;
   if (small) score -= 1;
+  // Phones start on Low and earn their way up: the controller raises the tier after a few
+  // smooth seconds, which is much nicer than starting high and stuttering.
+  if (touch && small) return "low";
   return score >= 3 ? "high" : score >= 1 ? "medium" : "low";
 }
 

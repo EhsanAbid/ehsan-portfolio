@@ -51,7 +51,8 @@ export function Hero({ ctx, children }: { ctx: Ctx; children?: React.ReactNode }
         >
           {p.name}
         </h1>
-        <p className="mono mt-6 min-h-[1.75em] text-lg text-cyan md:text-2xl" data-typewriter>
+        {/* Fixed height (2 lines on phones, 1 on desktop) so the typing never moves the buttons (CLS). */}
+        <p className="mono mt-6 h-[3.5rem] overflow-hidden text-lg text-cyan md:h-8 md:text-2xl" data-typewriter>
           <Typewriter lines={p.taglines.length ? p.taglines : [p.role]} />
           <span aria-hidden className="ml-0.5 inline-block w-[0.6ch] animate-pulse">▍</span>
         </p>

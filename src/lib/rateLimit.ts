@@ -16,8 +16,8 @@ export function hashIp(ip: string) {
 
 export async function clientIp() {
   const h = await headers();
-  // On Vercel the first x-forwarded-for entry is the real client address.
-  return h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "local";
+  // Vercel sets x-real-ip itself (a client can't spoof it); x-forwarded-for is the fallback.
+  return h.get("x-real-ip") || h.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
 }
 
 export async function clientIpHash() {

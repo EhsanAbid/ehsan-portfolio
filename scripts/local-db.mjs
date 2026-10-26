@@ -30,6 +30,7 @@ const serializers = {
 const db = await PGlite.create(process.env.LOCAL_DB_DIR ?? ".pglite", { parsers: rawText, serializers });
 
 let queue = Promise.resolve();
+let queries = 0; // GET / reports how many queries were served (used to verify caching)
 /** PGlite is single-connection: run requests one after another. */
 const serial = (fn) => (queue = queue.then(fn, fn));
 
@@ -47,7 +48,7 @@ async function runOne(tx, { query, params }) {
 const server = http.createServer((req, res) => {
   if (req.method !== "POST") {
     res.writeHead(200, { "content-type": "text/plain" });
-    return res.end("local neon-compatible db ok\n");
+    return res.end(`local neon-compatible db ok · queries served: ${queries}\n`);
   }
   let body = "";
   req.on("data", (c) => (body += c));
@@ -55,6 +56,7 @@ const server = http.createServer((req, res) => {
     serial(async () => {
       try {
         const payload = JSON.parse(body);
+        queries += Array.isArray(payload.queries) ? payload.queries.length : 1;
         let out;
         if (Array.isArray(payload.queries)) {
           out = { results: await db.transaction(async (tx) => {

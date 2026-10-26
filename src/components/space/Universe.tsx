@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import type { Site } from "@/schema/site";
 import { hasWebGL, initialTier, prefersReducedMotion } from "@/lib/fps";
-import { on } from "@/lib/events";
+import { bootRunning, on } from "@/lib/events";
 import { setUniverse, universe } from "./store";
 import { applySky, readSavedSky, saveSky, themeForHour } from "./sky";
 import { MiniMap, type MapStop } from "./MiniMap";
@@ -32,28 +32,65 @@ export function Universe({ effects, colors, stops, mapLabel }: UniverseProps) {
   // Device check, WebGL check, then lazy-load the canvas + smooth scroll.
   useEffect(() => {
     const reduced = prefersReducedMotion();
-    const webgl = hasWebGL();
-    setUniverse({ tier: initialTier(), webgl });
-    document.documentElement.classList.toggle("no-webgl", !webgl || reduced);
+    setUniverse({ tier: initialTier() });
+    if (reduced) document.documentElement.classList.add("no-webgl");
+    // Creating a test WebGL context is expensive, so it happens later, right before we need it.
+    let webgl: boolean | null = null;
+    const canWebGL = () => {
+      if (webgl === null) {
+        webgl = hasWebGL();
+        setUniverse({ webgl });
+        document.documentElement.classList.toggle("no-webgl", !webgl || reduced);
+      }
+      return webgl;
+    };
     let stop: (() => void) | undefined;
     let cancelled = false;
+    // Wait for the boot overlay to finish, then for an idle moment, so the heavy 3D setup
+    // never competes with the first paint and hydration.
+    const afterBoot = (fn: () => void) => (bootRunning() ? on("boot-done", fn) : (fn(), () => {}));
+    // Phones (coarse pointer): by default the 3D layer starts on the first touch or scroll, so the
+    // heavy WebGL setup never lands while the page is loading (admin: Effects → Quality controller).
+    const phone = matchMedia("(pointer: coarse)").matches;
+    const mode = phone ? effects.quality.phoneStart : "immediately";
+    const delay = mode === "delay" ? effects.quality.phoneDelaySec * 1000 : mode === "interaction" ? Infinity : 0;
+    let delayTimer: ReturnType<typeof setTimeout> | undefined;
+    const start3d = () => {
+      if (!cancelled && !reduced) whenIdle(() => !cancelled && canWebGL() && setMount3d(true));
+      removeEventListener("touchstart", start3d);
+      removeEventListener("scroll", start3d);
+    };
+    const offBoot = afterBoot(() => {
+      if (!delay) return start3d();
+      if (Number.isFinite(delay)) delayTimer = setTimeout(start3d, delay);
+      addEventListener("touchstart", start3d, { passive: true, once: true });
+      addEventListener("scroll", start3d, { passive: true, once: true });
+    });
     whenIdle(() => {
       if (cancelled) return;
-      if (webgl && !reduced) setMount3d(true);
       if (!reduced) {
-        import("./motion").then(({ startMotion }) =>
+        import("./motion").then(({ startMotion, startLiteMotion }) => {
+          if (cancelled) return;
+          if (phone) {
+            stop = startLiteMotion({ revealMs: effects.motion.revealMs });
+            return;
+          }
           startMotion({ smoothScroll: effects.motion.smoothScroll, revealMs: effects.motion.revealMs }).then((s) => {
             if (cancelled) s();
             else stop = s;
-          }),
-        );
+          });
+        });
       }
     });
     return () => {
       cancelled = true;
+      offBoot();
+      clearTimeout(delayTimer);
+      removeEventListener("touchstart", start3d);
+      removeEventListener("scroll", start3d);
       stop?.();
     };
-  }, [effects.motion.smoothScroll, effects.motion.revealMs]);
+  }, [effects.motion.smoothScroll, effects.motion.revealMs, effects.quality.phoneDelaySec, effects.quality.phoneStart]);
 
   // Sky theme: saved choice > visitor's local hour. Changeable via toggle/terminal events.
   useEffect(() => {

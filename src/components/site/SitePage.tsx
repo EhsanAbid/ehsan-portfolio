@@ -15,8 +15,9 @@ import { Universe } from "@/components/space/Universe";
 import { Boot } from "@/components/boot/Boot";
 import { ContactForm } from "@/sections/ContactForm";
 import { Interactions } from "@/components/ui/Interactions";
-import { Magic } from "@/components/magic/Magic";
+import { MagicLazy } from "@/components/magic/MagicLazy";
 import { magicProps } from "@/components/magic/magicData";
+import { personJsonLd } from "@/lib/seo";
 
 function renderSection(ctx: Ctx, s: Section): ReactNode {
   switch (s.type) {
@@ -73,6 +74,13 @@ export function SitePage({ site, preview = false, badge }: { site: Site; preview
     <div className="site-root" data-btn={site.design.buttonStyle} data-cursor={site.design.cursorStyle}>
       <SiteStyles site={site} />
       {!preview && <Boot site={site} />}
+      {!preview && (
+        <script
+          type="application/ld+json"
+          // JSON-LD Person: tells search engines who this site is about. `<` is escaped so the JSON can't close the tag.
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd(site)).replace(/</g, "\\u003c") }}
+        />
+      )}
       <a className="skip-link" href="#content">
         {site.copy.nav.skipToContent}
       </a>
@@ -90,7 +98,7 @@ export function SitePage({ site, preview = false, badge }: { site: Site; preview
       <main id="content">{sections.map((s) => renderSection(ctx, s))}</main>
       <Footer ctx={ctx} />
       <Interactions tilt={site.effects.motion.tilt} />
-      <Magic {...magicProps(site)} />
+      <MagicLazy {...magicProps(site)} />
     </div>
   );
 }

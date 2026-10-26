@@ -55,6 +55,16 @@ export default function SpaceCanvas({ effects, colors }: SpaceProps) {
     return () => document.removeEventListener("visibilitychange", on);
   }, []);
 
+  // Stage the work: the starfield mounts first, the particle name one idle moment later,
+  // so no single main-thread task gets long enough to make the page feel stuck.
+  const [particlesReady, setParticlesReady] = useState(false);
+  useEffect(() => {
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+    const go = () => setParticlesReady(true);
+    if (w.requestIdleCallback) w.requestIdleCallback(go, { timeout: 600 });
+    else setTimeout(go, 200);
+  }, []);
+
   const camera = useMemo(() => ({ fov: 60, near: 0.1, far: 1000, position: [0, 0, 0] as [number, number, number] }), []);
 
   return (
@@ -78,7 +88,7 @@ export default function SpaceCanvas({ effects, colors }: SpaceProps) {
             colorB={colors.violet}
           />
         )}
-        {effects.particles.enabled && effects.particles.counts[tier] > 0 && (
+        {particlesReady && effects.particles.enabled && effects.particles.counts[tier] > 0 && (
           <HeroParticles key={`${tier}-${effects.particles.counts[tier]}`} cfg={effects.particles} tier={tier} godSeconds={effects.konami.durationSec} />
         )}
       </Canvas>

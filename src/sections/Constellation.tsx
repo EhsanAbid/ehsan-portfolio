@@ -1,8 +1,6 @@
-"use client";
-
-import { useState } from "react";
 import type { Site, Skill } from "@/schema/site";
-import { emit } from "@/lib/events";
+import { filled } from "@/lib/todo";
+import { ConstellationTip } from "./ConstellationTip";
 
 type Labels = Site["copy"]["skills"];
 type Branch = Site["skills"]["branches"][number];
@@ -36,28 +34,16 @@ function layout(branches: Branch[], skills: Skill[]) {
 
 /**
  * Scene 4 — the Skill Constellation (SVG, so it's sharp, cheap and needs no WebGL).
- * Hover (mouse) or tap (touch) a star for details. The full accessible list sits below it.
+ * Rendered on the server; a tiny client controller adds the hover/tap tooltip.
+ * The full accessible list sits below it.
  */
 export function Constellation({ branches, skills, labels }: { branches: Branch[]; skills: Skill[]; labels: Labels }) {
   const arms = layout(branches, skills);
-  const [active, setActive] = useState<{ skill: Skill; x: number; y: number } | null>(null);
-
-  const inspect = (s: Skill, x: number, y: number) => {
-    setActive({ skill: s, x, y });
-    emit("trigger", { type: "custom-event", param: "skill-inspect", key: s.id });
-  };
-
-  const statusLabel = { mastered: labels.mastered, learning: labels.learning, locked: labels.locked };
+  const statusLabel = { mastered: labels.mastered, learning: labels.unlocking, locked: labels.locked };
 
   return (
-    <div className="relative mx-auto mb-10 max-w-3xl" data-reveal>
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className="h-auto w-full touch-manipulation select-none"
-        role="img"
-        aria-label={`${labels.listHeading}: ${skills.length}`}
-        onPointerLeave={(e) => e.pointerType === "mouse" && setActive(null)}
-      >
+    <div className="relative mx-auto mb-10 max-w-3xl" data-reveal id="constellation">
+      <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full touch-manipulation select-none" role="img" aria-label={`${labels.listHeading}: ${skills.length}`}>
         <defs>
           <radialGradient id="star-glow">
             <stop offset="0" stopColor="white" stopOpacity="0.9" />
@@ -84,21 +70,29 @@ export function Constellation({ branches, skills, labels }: { branches: Branch[]
             {stars.map(({ skill: s, x, y }) => {
               const locked = s.status === "locked";
               const color = s.status === "mastered" ? "var(--cyan)" : s.status === "learning" ? "var(--violet)" : "#64748b";
-              const isActive = active?.skill.id === s.id;
+              const lines = [
+                locked && filled(s.goal) ? `${labels.goal}: ${s.goal}` : "",
+                filled(s.usedIn) ? `${labels.usedIn}: ${s.usedIn}` : "",
+                filled(s.since) ? `${labels.since} ${s.since}` : "",
+              ].filter(Boolean);
               return (
                 <g
                   key={s.id}
                   className={`star star-${s.status}`}
                   transform={`translate(${x} ${y})`}
-                  onPointerEnter={(e) => e.pointerType === "mouse" && inspect(s, x, y)}
-                  onClick={() => (isActive ? setActive(null) : inspect(s, x, y))}
                   style={{ cursor: "pointer" }}
+                  data-star={s.id}
+                  data-x={(x / W) * 100}
+                  data-y={(y / H) * 100}
+                  data-name={s.name}
+                  data-status={statusLabel[s.status]}
+                  data-lines={lines.join("\n")}
                 >
                   {/* invisible bigger hit area for fingers */}
                   <circle r={22} fill="transparent" />
                   {!locked && <circle r={16} fill="url(#star-glow)" opacity={s.status === "mastered" ? 0.55 : 0.3} />}
                   {s.status === "learning" && <circle className="unlock-ring" r={13} fill="none" stroke="var(--violet)" strokeWidth={1.5} strokeDasharray="4 4" />}
-                  <circle r={s.status === "mastered" ? 6 : locked ? 4.5 : 5} fill={color} stroke={isActive ? "white" : "none"} strokeWidth={2} />
+                  <circle className="star-core" r={s.status === "mastered" ? 6 : locked ? 4.5 : 5} fill={color} strokeWidth={2} />
                   {locked && (
                     <text y={4} textAnchor="middle" fontSize="9" fill="#0b1026" fontWeight="700">
                       ?
@@ -113,34 +107,7 @@ export function Constellation({ branches, skills, labels }: { branches: Branch[]
           </g>
         ))}
       </svg>
-
-      {active && (
-        <div
-          className="glass pointer-events-none absolute z-10 w-56 -translate-x-1/2 p-3 text-sm"
-          style={{ left: `${(active.x / W) * 100}%`, top: `${(active.y / H) * 100}%`, transform: "translate(-50%, 18px)" }}
-          role="status"
-        >
-          <p className="font-semibold text-white">{active.skill.name}</p>
-          <p className="mono mt-0.5 text-xs text-cyan">
-            {active.skill.status === "learning" ? labels.unlocking : statusLabel[active.skill.status]}
-          </p>
-          {active.skill.status === "locked" && active.skill.goal && !active.skill.goal.includes("TODO_EHSAN") && (
-            <p className="mt-1 text-xs text-muted">
-              {labels.goal}: {active.skill.goal}
-            </p>
-          )}
-          {active.skill.usedIn && !active.skill.usedIn.includes("TODO_EHSAN") && (
-            <p className="mt-1 text-xs text-muted">
-              {labels.usedIn}: {active.skill.usedIn}
-            </p>
-          )}
-          {active.skill.since && !active.skill.since.includes("TODO_EHSAN") && (
-            <p className="text-xs text-muted">
-              {labels.since} {active.skill.since}
-            </p>
-          )}
-        </div>
-      )}
+      <ConstellationTip />
     </div>
   );
 }

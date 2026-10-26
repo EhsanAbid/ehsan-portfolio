@@ -8,7 +8,7 @@ export const siteUrl = () => (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localh
 
 export function siteMetadata(site: Site): Metadata {
   const s = site.seo;
-  const og = s.ogImage.key ? mediaUrl(s.ogImage) : "/opengraph-image";
+  const og = s.ogImage.key ? mediaUrl(s.ogImage) : "/og";
   return {
     title: s.title,
     description: s.description,

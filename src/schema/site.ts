@@ -378,6 +378,15 @@ const effectsSchema = group("Effects", {
     dropAfterSec: num("…for at least", 2, 1, 10, { unit: "s", step: 0.5 }),
     raiseAboveFps: int("Raise a tier above", 58, 40, 120, { unit: "fps" }),
     raiseAfterSec: num("…for at least", 5, 2, 20, { unit: "s", step: 0.5 }),
+    phoneStart: select("Phones: when does the 3D universe start?", ["interaction", "delay", "immediately"] as const, "interaction", {
+      optionLabels: {
+        interaction: "On first touch or scroll (fastest load, saves battery)",
+        delay: "After the delay below (or on touch/scroll)",
+        immediately: "Immediately after the boot",
+      },
+      help: "Desktop always starts right after the boot. On phones the name, buttons and content are fully usable before WebGL starts.",
+    }),
+    phoneDelaySec: num("Phones: delay (for the 'after the delay' option)", 4, 0, 30, { unit: "s", step: 0.5 }),
   }),
 });
 

@@ -49,6 +49,8 @@ const nextConfig: NextConfig = {
   experimental: {
     // Tree-shake big packages so only the parts we import end up in the bundle.
     optimizePackageImports: ["three", "@react-three/drei", "gsap"],
+    // Admin saves + backup imports go through server actions (default limit is 1 MB).
+    serverActions: { bodySizeLimit: "3mb" },
   },
   async headers() {
     // /preview may be framed by our own admin (live preview); everything else may not be framed at all.

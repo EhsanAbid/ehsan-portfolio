@@ -35,10 +35,22 @@ export function JourneyPath() {
       }
       setD(path);
     };
-    build();
+    // Measure only once the timeline is near the screen (no forced layout during start-up).
     const ro = new ResizeObserver(build);
-    ro.observe(list);
-    return () => ro.disconnect();
+    const io = new IntersectionObserver(
+      (es) => {
+        if (!es.some((e) => e.isIntersecting)) return;
+        io.disconnect();
+        build();
+        ro.observe(list);
+      },
+      { rootMargin: "400px" },
+    );
+    io.observe(list);
+    return () => {
+      io.disconnect();
+      ro.disconnect();
+    };
   }, []);
 
   useEffect(() => {

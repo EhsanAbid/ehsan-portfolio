@@ -13,16 +13,26 @@ export function LabScopes() {
     if (!boxes.length) return;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const cyan = getComputedStyle(document.documentElement).getPropertyValue("--cyan").trim() || "#22d3ee";
-    const scopes = boxes.map((box) => {
-      const c = document.createElement("canvas");
-      c.className = "size-full";
-      box.appendChild(c);
-      return { box, c, ctx: c.getContext("2d")!, progress: Number(box.dataset.scope) || 0, visible: false };
-    });
+    // Canvases are created lazily the first time a scope scrolls into view.
+    const scopes = boxes.map((box) => ({
+      box,
+      c: null as HTMLCanvasElement | null,
+      ctx: null as CanvasRenderingContext2D | null,
+      progress: Number(box.dataset.scope) || 0,
+      visible: false,
+    }));
     const io = new IntersectionObserver((es) =>
       es.forEach((e) => {
         const s = scopes.find((x) => x.box === e.target);
-        if (s) s.visible = e.isIntersecting;
+        if (!s) return;
+        s.visible = e.isIntersecting;
+        if (s.visible && !s.c) {
+          s.c = document.createElement("canvas");
+          s.c.className = "size-full";
+          s.box.appendChild(s.c);
+          s.ctx = s.c.getContext("2d");
+          if (reduced) requestAnimationFrame((t) => draw(t)); // static wave: draw once
+        }
       }),
     );
     scopes.forEach((s) => io.observe(s.box));
@@ -30,7 +40,7 @@ export function LabScopes() {
     let raf = 0;
     const draw = (time: number) => {
       for (const s of scopes) {
-        if (!s.visible && !reduced) continue;
+        if (!s.c || !s.ctx || (!s.visible && !reduced)) continue;
         const dpr = Math.min(devicePixelRatio, 2);
         const w = s.box.clientWidth;
         const h = s.box.clientHeight;
@@ -71,7 +81,7 @@ export function LabScopes() {
     return () => {
       cancelAnimationFrame(raf);
       io.disconnect();
-      scopes.forEach((s) => s.c.remove());
+      scopes.forEach((s) => s.c?.remove());
     };
   }, []);
   return null;

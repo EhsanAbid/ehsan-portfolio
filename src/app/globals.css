@@ -115,6 +115,12 @@ a {
   margin-inline: auto;
   max-width: 72rem;
 }
+/* Off-screen sections skip layout and paint until they come near the viewport.
+   `auto` in contain-intrinsic-size remembers each section's real height once rendered. */
+main > .section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
 
 .eyebrow {
   font-family: var(--font-code);
@@ -784,4 +790,7 @@ html.comet-cursor .site-root textarea {
 
 .quest-highlight {
   box-shadow: 0 0 0 2px var(--gold), 0 0 40px color-mix(in srgb, var(--gold) 40%, transparent);
+}
+.star.active .star-core {
+  stroke: #fff;
 }

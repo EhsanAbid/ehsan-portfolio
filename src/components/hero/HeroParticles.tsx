@@ -5,7 +5,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { AdditiveBlending, BufferAttribute, BufferGeometry, Color, ShaderMaterial } from "three";
 import type { Site } from "@/schema/site";
 import type { Tier } from "@/lib/fps";
-import { on } from "@/lib/events";
+import { bootRunning, on } from "@/lib/events";
 import { universe } from "@/components/space/store";
 
 /*
@@ -114,6 +114,9 @@ function sampleName(el: HTMLElement, count: number): Float32Array {
   return out;
 }
 
+/** Set once the name has formed; a later tier change rebuilds the particles already in place. */
+let formedOnce = false;
+
 class ParticleSim {
   pos: Float32Array;
   vel: Float32Array;
@@ -125,6 +128,9 @@ class ParticleSim {
   rainbow = 0;
   rainbowUntil = 0;
   alpha = 0;
+  /** True once everything has settled: no physics, no GPU upload until something changes. */
+  sleeping = false;
+  lastPointer = "";
 
   constructor(
     public count: number,
@@ -179,8 +185,20 @@ class ParticleSim {
     this.active = true;
   }
 
+  /** Rebuild already formed (tier change): particles appear at home, no second Big Bang. */
+  formInPlace(el: HTMLElement) {
+    this.home = sampleName(el, this.count);
+    for (let i = 0; i < this.count; i++) {
+      this.pos[i * 3] = this.home[i * 2];
+      this.pos[i * 3 + 1] = this.home[i * 2 + 1];
+    }
+    this.attr.needsUpdate = true;
+    this.active = true;
+  }
+
   resample(el: HTMLElement) {
     if (this.home) this.home = sampleName(el, this.count);
+    this.sleeping = false;
   }
 
   step(dt: number, time: number, dpr: number, cfg: Cfg, hero: HTMLElement) {
@@ -201,6 +219,14 @@ class ParticleSim {
     // Skip the physics while the hero is scrolled out of view (nothing to see).
     if (hero.getBoundingClientRect().bottom < -50) return;
 
+    // Sleep when settled: if the pointer hasn't moved and nothing is moving, skip the work.
+    const pkey = `${universe.pointer.x},${universe.pointer.y},${universe.pointer.active},${scrollY}`;
+    if (pkey !== this.lastPointer) {
+      this.lastPointer = pkey;
+      this.sleeping = false;
+    }
+    if (this.sleeping) return;
+
     // Frame-rate independence: the constants are tuned for 60 fps, so scale by dt·60.
     const f = Math.min(dt * 60, 3);
     const k = cfg.spring * f;
@@ -212,6 +238,7 @@ class ParticleSim {
     const r2 = r * r;
     const repel = cfg.repelForce * 6 * f;
     const { pos, vel, home } = this;
+    let energy = 0;
     for (let i = 0; i < this.count; i++) {
       const ix = i * 3;
       const iv = i * 2;
@@ -232,8 +259,11 @@ class ParticleSim {
       vel[iv + 1] = (vel[iv + 1] + fy) * damp;
       pos[ix] += vel[iv] * f;
       pos[ix + 1] += vel[iv + 1] * f;
+      energy += Math.abs(vel[iv]) + Math.abs(vel[iv + 1]);
     }
     this.attr.needsUpdate = true;
+    // Average speed below 0.02 px/frame → settled.
+    if (energy / this.count < 0.02) this.sleeping = true;
   }
 
   dispose() {
@@ -255,11 +285,18 @@ export function HeroParticles({ cfg, tier, godSeconds }: { cfg: Cfg; tier: Tier;
     let formedTimer: ReturnType<typeof setTimeout>;
     const start = () =>
       document.fonts.ready.then(() => {
+        if (formedOnce) {
+          sim.formInPlace(el);
+          root.classList.add("particles-on", `tier-${tier}`);
+          return;
+        }
         sim.explode(el);
-        formedTimer = setTimeout(() => root.classList.add("particles-on", `tier-${tier}`), 900);
+        formedTimer = setTimeout(() => {
+          formedOnce = true;
+          root.classList.add("particles-on", `tier-${tier}`);
+        }, 900);
       });
-    const bootDone = !root.dataset.boot || root.dataset.boot === "off" || root.dataset.boot === "done";
-    const off = bootDone ? (start(), () => {}) : on("boot-done", start);
+    const off = bootRunning() ? on("boot-done", start) : (start(), () => {});
 
     let rt: ReturnType<typeof setTimeout>;
     const onResize = () => {
