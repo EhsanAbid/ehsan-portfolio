@@ -404,3 +404,161 @@ html:not(.no-webgl) .site-root:has(.space-canvas) .static-stars {
   border-color: var(--cyan);
   box-shadow: 0 0 22px color-mix(in srgb, var(--cyan) 60%, transparent);
 }
+
+/* ───────── Boot sequence (pure CSS timeline; see components/boot/Boot.tsx) ───────── */
+.boot {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: var(--bg-deep);
+}
+html[data-boot="full"] .boot,
+html[data-boot="mini"] .boot {
+  display: flex;
+  animation: boot-out calc(var(--boot-ms) * 0.18) var(--ease-expo) calc(var(--boot-ms) * 0.82) forwards;
+}
+@keyframes boot-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+.boot-inner {
+  width: min(34rem, 100%);
+  font-size: clamp(0.78rem, 2.6vw, 0.95rem);
+  color: var(--cyan);
+  animation: collapse calc(var(--boot-ms) * 0.12) cubic-bezier(0.7, 0, 0.84, 0) calc(var(--boot-ms) * 0.72) forwards;
+}
+@keyframes collapse {
+  to {
+    transform: scale(0.01, 0.003);
+    opacity: 0;
+  }
+}
+.boot-line {
+  white-space: pre;
+  overflow: hidden;
+  line-height: 1.9;
+  clip-path: inset(0 100% 0 0);
+  animation: type calc(var(--boot-ms) * 0.5 / var(--lines)) steps(28) forwards;
+  animation-delay: calc(var(--boot-ms) * 0.55 * var(--i) / var(--lines));
+}
+.boot-last {
+  color: #fff;
+}
+@keyframes type {
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+.boot-night {
+  display: none;
+}
+html[data-night] .boot-day {
+  display: none;
+}
+html[data-night] .boot-night {
+  display: inline;
+}
+html[data-boot="mini"] .boot-line:not(.boot-last) {
+  display: none;
+}
+html[data-boot="mini"] .boot-last {
+  animation-delay: 0ms;
+}
+.boot-bar {
+  margin-top: 1rem;
+  height: 3px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.boot-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--violet), var(--cyan));
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: bar calc(var(--boot-ms) * 0.72) linear forwards;
+}
+@keyframes bar {
+  to {
+    transform: scaleX(1);
+  }
+}
+.boot-point {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 30px 10px var(--cyan);
+  opacity: 0;
+  animation: point calc(var(--boot-ms) * 0.22) ease-out calc(var(--boot-ms) * 0.78) forwards;
+}
+@keyframes point {
+  30% {
+    opacity: 1;
+    transform: scale(1.4);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(10);
+  }
+}
+.boot-skip {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+}
+
+/* The particle name takes over; the HTML text stays (for SEO, screen readers, selection)
+   but becomes a faint guide underneath. */
+#hero-name {
+  transition: color 1.2s var(--ease-expo);
+}
+.particles-on #hero-name {
+  color: color-mix(in srgb, var(--text) 8%, transparent);
+}
+.particles-on.tier-low #hero-name {
+  color: color-mix(in srgb, var(--text) 35%, transparent);
+}
+
+/* XP bar shimmer (ambient, slow). */
+.xp-fill {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--gold) 70%, #000), var(--gold), #fff3c4, var(--gold));
+  background-size: 300% 100%;
+  animation: xp 6s linear infinite;
+}
+@keyframes xp {
+  to {
+    background-position: -300% 0;
+  }
+}
+
+.hud-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px !important;
+  font-size: 0.9rem;
+  color: var(--text);
+  transition: border-color 0.2s;
+}
+.hud-btn:hover {
+  border-color: color-mix(in srgb, var(--cyan) 60%, transparent);
+}

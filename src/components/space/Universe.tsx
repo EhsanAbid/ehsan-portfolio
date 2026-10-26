@@ -1,9 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import type { Site } from "@/schema/site";
-import { hasWebGL, initialTier, prefersReducedMotion, type Tier } from "@/lib/fps";
+import { hasWebGL, initialTier, prefersReducedMotion } from "@/lib/fps";
 import { on } from "@/lib/events";
 import { setUniverse, universe } from "./store";
 import { applySky, readSavedSky, saveSky, themeForHour } from "./sky";
@@ -17,8 +17,6 @@ export type UniverseProps = {
   colors: { cyan: string; violet: string };
   stops: MapStop[];
   mapLabel: string;
-  /** Extra things to draw inside the WebGL scene (hero particles). */
-  scene?: (tier: Tier) => ReactNode;
 };
 
 /** Runs `fn` when the browser has nothing better to do (after first paint & hydration). */
@@ -28,7 +26,7 @@ function whenIdle(fn: () => void) {
   else setTimeout(fn, 600);
 }
 
-export function Universe({ effects, colors, stops, mapLabel, scene }: UniverseProps) {
+export function Universe({ effects, colors, stops, mapLabel }: UniverseProps) {
   const [mount3d, setMount3d] = useState(false);
 
   // Device check, WebGL check, then lazy-load the canvas + smooth scroll.
@@ -84,6 +82,25 @@ export function Universe({ effects, colors, stops, mapLabel, scene }: UniversePr
     });
   }, [effects.sky]);
 
+  // Pointer position for the particle repel (canvas has pointer-events: none, so listen on window).
+  useEffect(() => {
+    // Mutated directly (no listeners notified): only the render loop reads it.
+    const move = (e: PointerEvent) => (universe.pointer = { x: e.clientX, y: e.clientY, active: true });
+    const leave = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse" || e.type === "pointerleave") universe.pointer = { x: -9999, y: -9999, active: false };
+    };
+    addEventListener("pointermove", move, { passive: true });
+    addEventListener("pointerdown", move, { passive: true });
+    addEventListener("pointerup", leave);
+    document.documentElement.addEventListener("pointerleave", leave);
+    return () => {
+      removeEventListener("pointermove", move);
+      removeEventListener("pointerdown", move);
+      removeEventListener("pointerup", leave);
+      document.documentElement.removeEventListener("pointerleave", leave);
+    };
+  }, []);
+
   // Scroll progress for the mini-map / progress line (velocity is measured in the canvas loop).
   useEffect(() => {
     let raf = 0;
@@ -103,7 +120,7 @@ export function Universe({ effects, colors, stops, mapLabel, scene }: UniversePr
   return (
     <>
       <div className="static-stars" aria-hidden />
-      {mount3d && effects.starfield.enabled && <SpaceCanvas effects={effects} colors={colors}>{scene}</SpaceCanvas>}
+      {mount3d && (effects.starfield.enabled || effects.particles.enabled) && <SpaceCanvas effects={effects} colors={colors} />}
       <MiniMap stops={stops} label={mapLabel} />
     </>
   );

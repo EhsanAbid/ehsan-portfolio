@@ -12,6 +12,7 @@ import { Cta, CustomCards, CustomText, Embed, Gallery, Quote } from "@/sections/
 import { Footer } from "@/sections/Footer";
 import { sectionAnchor, type Ctx } from "@/sections/shared";
 import { Universe } from "@/components/space/Universe";
+import { Boot } from "@/components/boot/Boot";
 
 function renderSection(ctx: Ctx, s: Section): ReactNode {
   switch (s.type) {
@@ -67,6 +68,7 @@ export function SitePage({ site, preview = false, badge }: { site: Site; preview
   return (
     <div className="site-root" data-btn={site.design.buttonStyle} data-cursor={site.design.cursorStyle}>
       <SiteStyles site={site} />
+      {!preview && <Boot site={site} />}
       <a className="skip-link" href="#content">
         {site.copy.nav.skipToContent}
       </a>

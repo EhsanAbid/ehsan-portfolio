@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import type { Site } from "@/schema/site";
 import { FpsController, type Tier } from "@/lib/fps";
 import { setUniverse, subscribe, universe } from "./store";
 import { Starfield } from "./Starfield";
+import { HeroParticles } from "@/components/hero/HeroParticles";
 
 /**
  * The one WebGL canvas of the site (lazy-loaded chunk): fixed behind the content,
@@ -15,7 +16,6 @@ import { Starfield } from "./Starfield";
 export type SpaceProps = {
   effects: Site["effects"];
   colors: { cyan: string; violet: string };
-  children?: (tier: Tier) => ReactNode;
 };
 
 /** Frame-loop bookkeeping: FPS controller + scroll velocity. */
@@ -39,7 +39,7 @@ function Controller({ effects }: { effects: Site["effects"] }) {
   return null;
 }
 
-export default function SpaceCanvas({ effects, colors, children }: SpaceProps) {
+export default function SpaceCanvas({ effects, colors }: SpaceProps) {
   const [tier, setTier] = useState<Tier>(universe.tier);
   useEffect(() => subscribe(() => setTier(universe.tier)), []);
   const q = effects.quality;
@@ -78,7 +78,9 @@ export default function SpaceCanvas({ effects, colors, children }: SpaceProps) {
             colorB={colors.violet}
           />
         )}
-        {children?.(tier)}
+        {effects.particles.enabled && effects.particles.counts[tier] > 0 && (
+          <HeroParticles key={`${tier}-${effects.particles.counts[tier]}`} cfg={effects.particles} tier={tier} godSeconds={effects.konami.durationSec} />
+        )}
       </Canvas>
     </div>
   );
