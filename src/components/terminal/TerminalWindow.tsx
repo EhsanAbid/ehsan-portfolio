@@ -3,9 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { TerminalCommand } from "@/schema/site";
 import { emit } from "@/lib/events";
-import { blip } from "@/lib/sound";
-import { unlockedIds } from "@/components/achievements/storage";
-import { scrollToTarget } from "@/components/space/motion";
 import type { TerminalData } from "./types";
 
 type Line = { kind: "in" | "out" | "err"; text: string };
@@ -40,23 +37,14 @@ function execute(input: string, d: TerminalData, cmds: TerminalCommand[]): Resul
       return { out: withReply([`  ${m.mastered}: ${by("mastered")}`, `  ${m.learning}: ${by("learning")}`, `  ${m.locked2}: ${by("locked")}`]) };
     }
     case "projects":
-      return { out: withReply([...d.quests.map((q) => `  [${q.status}] ${q.id} — ${q.title}`), m.openHint]) };
+      if (!d.works.length) return { out: [m.noProjects] };
+      return { out: withReply([...d.works.map((w) => `  ${w.id.padEnd(16)} ${w.title}`), m.openHint]) };
     case "open": {
       if (!arg) return { out: [m.openUsage], err: true };
       const a = arg.toLowerCase();
-      const q = d.quests.find((x) => x.id.toLowerCase() === a) ?? d.quests.find((x) => x.title.toLowerCase().includes(a));
-      if (!q) return { out: [fill(m.questNotFound, vars)], err: true };
-      return {
-        out: [reply || q.title],
-        close: true,
-        after: () => {
-          const el = document.getElementById(`quest-${q.id}`);
-          if (!el) return;
-          scrollToTarget(el);
-          el.classList.add("quest-highlight");
-          setTimeout(() => el.classList.remove("quest-highlight"), 2400);
-        },
-      };
+      const w = d.works.find((x) => x.id.toLowerCase() === a) ?? d.works.find((x) => x.title.toLowerCase().includes(a));
+      if (!w) return { out: [fill(m.questNotFound, vars)], err: true };
+      return { out: [reply || w.title], close: true, after: () => emit("open-panel", { id: `work-${w.id}` }) };
     }
     case "cv":
       if (!d.cvUrl) return { out: [m.noCv], err: true };
@@ -70,50 +58,13 @@ function execute(input: string, d: TerminalData, cmds: TerminalCommand[]): Resul
         },
       };
     case "contact":
-      return {
-        out: withReply(d.email ? [`  ${d.email}`] : []),
-        close: !!d.contactAnchor,
-        after: () => d.contactAnchor && scrollToTarget(`#${d.contactAnchor}`),
-      };
+      return { out: withReply(d.email ? [`  ${d.email}`] : []), close: true, after: () => emit("open-panel", { id: "contact" }) };
     case "socials":
       return { out: withReply(d.socials.map((s) => `  ${s.label.padEnd(10)} ${s.url.replace(/^mailto:/, "")}`)) };
-    case "theme": {
-      const opts = d.themes.map((t) => t.id).join("|");
-      const t = d.themes.find((x) => x.id === arg.toLowerCase() || x.name.toLowerCase() === arg.toLowerCase());
-      if (!t) return { out: [fill(m.themeUsage, { ...vars, options: opts })], err: !!arg };
-      emit("sky", { id: t.id });
-      return { out: [fill(cmd.reply || "{arg}", { ...vars, arg: t.name })] };
-    }
-    case "sound":
-      if (arg !== "on" && arg !== "off") return { out: [m.soundUsage], err: true };
-      try {
-        localStorage.setItem("ehsan.sound", arg === "on" ? "1" : "0");
-      } catch {}
-      emit("sound", { on: arg === "on" });
-      return { out: [reply] };
-    case "achievements": {
-      const got = new Set(unlockedIds());
-      return {
-        out: withReply(
-          d.achievements.map((a) =>
-            got.has(a.id) ? `  ${m.unlocked} ${a.icon} ${a.name} — ${a.description}` : `  ${m.locked} ${d.hiddenName} — ${d.hiddenHint}`,
-          ),
-        ),
-      };
-    }
-    case "matrix":
-      return { out: [reply], close: true, after: () => emit("matrix", {}) };
     case "sudo": {
-      const ok = /^hire\b/i.test(arg) && arg.toLowerCase().includes(d.name.toLowerCase().split(" ")[0]);
+      const ok = /^hire/i.test(arg) && arg.toLowerCase().includes(d.name.toLowerCase().split(" ")[0]);
       if (!ok) return { out: [fill(m.sudoDenied, vars)], err: true };
-      return {
-        out: [reply],
-        close: !!d.contactAnchor,
-        after: () => {
-          emit("confetti", {});
-          if (d.contactAnchor) setTimeout(() => scrollToTarget(`#${d.contactAnchor}`), 600);
-        },
-      };
+      return { out: [reply], close: true, after: () => emit("open-panel", { id: "contact" }) };
     }
     case "joke":
       return { out: [d.jokes.length ? d.jokes[Math.floor(Math.random() * d.jokes.length)] : m.noJokes] };
@@ -158,7 +109,6 @@ export default function TerminalWindow({ data, onClose }: { data: TerminalData; 
     setHIndex(-1);
     if (!text) return;
     setHistory((h) => [...h, text].slice(-50));
-    emit("trigger", { type: "terminal-command", param: text });
     const r = execute(text, data, cmds);
     if (r.clear) setLines([]);
     else setLines((l) => [...l, { kind: "in", text }, ...r.out.filter(Boolean).map((t) => ({ kind: (r.err ? "err" : "out") as Line["kind"], text: t }))]);
@@ -176,8 +126,7 @@ export default function TerminalWindow({ data, onClose }: { data: TerminalData; 
       return;
     }
     const cmd = cmds.find((c) => c.name === parts[0]);
-    const pool =
-      cmd?.builtin === "open" ? data.quests.map((q) => q.id) : cmd?.builtin === "theme" ? data.themes.map((t) => t.id) : cmd?.builtin === "sound" ? ["on", "off"] : [];
+    const pool = cmd?.builtin === "open" ? data.works.map((w) => w.id) : [];
     const hits = pool.filter((p) => p.startsWith(parts.slice(1).join(" ").toLowerCase()));
     if (hits.length === 1) setValue(`${parts[0]} ${hits[0]}`);
     else if (hits.length > 1) setLines((l) => [...l, { kind: "out", text: hits.join("  ") }]);
@@ -185,19 +134,19 @@ export default function TerminalWindow({ data, onClose }: { data: TerminalData; 
 
   return (
     <div className="fixed inset-0 z-[150] flex items-end justify-center bg-black/50 p-2 backdrop-blur-sm sm:items-center sm:p-6" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-modal="true" aria-label={data.cfg.title} className="terminal glass flex h-[70vh] w-full max-w-3xl flex-col overflow-hidden !rounded-xl !bg-[#05060f]/90">
+      <div role="dialog" aria-modal="true" aria-label={data.cfg.title} className="terminal glass flex h-[70vh] w-full max-w-3xl flex-col overflow-hidden !rounded-xl !bg-[var(--bg)]/90">
         <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
           <span className="size-3 rounded-full bg-[#ff5f57]" aria-hidden />
           <span className="size-3 rounded-full bg-[#febc2e]" aria-hidden />
           <span className="size-3 rounded-full bg-[#28c840]" aria-hidden />
-          <p className="mono flex-1 text-center text-xs text-muted">{data.cfg.title}</p>
-          <button type="button" onClick={onClose} className="mono rounded px-2 text-muted hover:text-white" aria-label={data.closeLabel}>
+          <p className="mono flex-1 text-center text-xs text-fg-muted">{data.cfg.title}</p>
+          <button type="button" onClick={onClose} className="mono rounded px-2 text-fg-muted hover:text-fg" aria-label={data.closeLabel}>
             ✕
           </button>
         </div>
         <div ref={scroller} className="mono flex-1 overflow-y-auto p-4 text-[0.85rem] leading-relaxed" onClick={() => input.current?.focus()} aria-live="polite">
           {lines.map((l, i) => (
-            <p key={i} className={`whitespace-pre-wrap ${l.kind === "in" ? "text-white" : l.kind === "err" ? "text-pink" : "text-cyan/90"}`}>
+            <p key={i} className={`whitespace-pre-wrap ${l.kind === "in" ? "text-fg" : l.kind === "err" ? "text-accent" : "text-fg-muted"}`}>
               {l.kind === "in" ? `${data.cfg.prompt} ${l.text}` : l.text}
             </p>
           ))}
@@ -208,7 +157,7 @@ export default function TerminalWindow({ data, onClose }: { data: TerminalData; 
               submit();
             }}
           >
-            <label htmlFor="term-input" className="shrink-0 text-gold">
+            <label htmlFor="term-input" className="shrink-0 text-fg-muted">
               {data.cfg.prompt}
             </label>
             <input
@@ -218,11 +167,8 @@ export default function TerminalWindow({ data, onClose }: { data: TerminalData; 
               autoComplete="off"
               autoCapitalize="off"
               spellCheck={false}
-              className="min-w-0 flex-1 bg-transparent text-white caret-cyan outline-none"
-              onChange={(e) => {
-                setValue(e.target.value);
-                blip();
-              }}
+              className="min-w-0 flex-1 bg-transparent text-fg caret-current outline-none"
+              onChange={(e) => setValue(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Tab") {
                   e.preventDefault();

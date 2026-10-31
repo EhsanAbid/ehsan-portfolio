@@ -1,38 +1,31 @@
 import type { Site } from "@/schema/site";
 import { FONT_VARS } from "@/lib/fonts";
-import { rgba } from "@/lib/color";
+import { luminance, rgba } from "@/lib/color";
 
-/** Turns the published design tokens into CSS variables (spec §7: no rebuild for a colour change). */
+/** Turns the published design settings into CSS variables (no rebuild for a colour change). */
 export function designCss(site: Site) {
   const d = site.design;
   const c = d.colors;
-  const sky = site.effects.sky.themes.find((t) => t.id === "night") ?? site.effects.sky.themes[0];
+  const light = luminance(c.bg) > 0.5;
   const vars: Record<string, string> = {
-    "--bg-deep": c.bgDeep,
-    "--panel": rgba(c.panel, d.glassOpacity),
-    "--panel-border": rgba(c.panel, Math.min(0.25, d.glassOpacity * 2 + 0.04)),
-    "--cyan": c.cyan,
-    "--violet": c.violet,
-    "--pink": c.pink,
-    "--gold": c.gold,
-    "--text": c.text,
-    "--muted": c.muted,
+    "--bg": c.bg,
+    "--fg": c.text,
+    "--fg-muted": c.muted,
+    "--accent": c.accent,
+    "--line": c.lines,
+    "--panel-bg": rgba(c.panel, d.glassOpacity),
+    "--panel-border": light ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.09)",
     "--radius": `${d.radius}px`,
     "--blur": `${d.glassBlur}px`,
-    "--space": String(d.spacing),
-    "--font-heading": `var(${FONT_VARS[d.fonts.heading] ?? "--f-space-grotesk"}), ui-sans-serif, system-ui, sans-serif`,
-    "--font-body": `var(${FONT_VARS[d.fonts.body] ?? "--f-inter"}), ui-sans-serif, system-ui, sans-serif`,
-    "--font-code": `var(${FONT_VARS[d.fonts.mono] ?? "--f-jetbrains"}), ui-monospace, monospace`,
-    "--reveal-ms": `${site.effects.motion.revealMs}ms`,
+    "--name-scale": String(d.nameSize),
+    "--font-display": `var(${FONT_VARS[d.fonts.display] ?? "--f-instrument"}), "Times New Roman", serif`,
+    "--display-style": d.fonts.displayItalic ? "italic" : "normal",
+    "--font-body": `var(${FONT_VARS[d.fonts.body] ?? "--f-inter-tight"}), ui-sans-serif, system-ui, sans-serif`,
   };
-  if (sky) {
-    vars["--sky-top"] = sky.top;
-    vars["--sky-bottom"] = sky.bottom;
-    vars["--sky-glow"] = sky.glow;
-  }
+  const scheme = light ? "html{color-scheme:light}" : "";
   return `:root{${Object.entries(vars)
     .map(([k, v]) => `${k}:${v}`)
-    .join(";")}}`;
+    .join(";")}}${scheme}`;
 }
 
 /** Prevent admin-entered CSS from closing the <style> tag and injecting HTML. */

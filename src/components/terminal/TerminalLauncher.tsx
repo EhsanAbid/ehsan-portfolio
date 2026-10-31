@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { emit, on } from "@/lib/events";
+import { on } from "@/lib/events";
 import type { TerminalData } from "./types";
 
 // The terminal window is only downloaded the first time someone opens it.
@@ -32,9 +32,6 @@ export function TerminalLauncher({ data }: { data: TerminalData }) {
     };
   }, [data.cfg.enabled]);
 
-  useEffect(() => {
-    if (open) emit("trigger", { type: "custom-event", param: "terminal-open" });
-  }, [open]);
 
   if (!open) return null;
   return <TerminalWindow data={data} onClose={() => setOpen(false)} />;

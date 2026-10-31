@@ -1,8 +1,8 @@
-# ehsan.exe — The Level-Up Universe
+# ehsan.exe — portfolio
 
 Personal portfolio of **Ehsan Ahmed Abid** (BSc CSE, East West University) with an admin panel ("Mission Control").
-The visitor boots Ehsan like a program, watches a Big Bang form his name from particles, and travels through a
-universe where skills are stars, projects are quests and achievements are hidden everywhere.
+Ehsan's face is built from thousands of small textured blocks (WebGL) with his signature writing itself behind it;
+scrolling shatters the face and flies the camera through his projects. Everything is editable in `/admin`.
 
 **Stack (all free):** Next.js 16 (App Router, Cache Components) · TypeScript · Tailwind CSS 4 · three.js + react-three-fiber ·
 GSAP + Lenis · Neon Postgres + Drizzle · Zod · jose + bcrypt · TipTap · dnd-kit · sharp · Vercel.

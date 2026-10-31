@@ -3,21 +3,21 @@ import type { Site } from "./site";
 type Colors = Site["design"]["colors"];
 
 /** Theme presets offered in Admin → Design. Applying one copies its colours into the draft. */
-export const DESIGN_PRESETS: Record<"deep-space" | "nebula" | "aurora" | "midnight-gold", { label: string; colors: Colors }> = {
-  "deep-space": {
-    label: "Deep Space",
-    colors: { bgDeep: "#05060F", panel: "#FFFFFF", cyan: "#22D3EE", violet: "#8B5CF6", pink: "#F472B6", gold: "#FBBF24", text: "#E5E7EB", muted: "#94A3B8" },
+export const DESIGN_PRESETS: Record<"ink" | "paper" | "midnight" | "forest", { label: string; colors: Colors }> = {
+  ink: {
+    label: "Ink",
+    colors: { bg: "#0A0A0A", text: "#F2F2F0", muted: "#A3A3A0", accent: "#9DB8FF", panel: "#171717", lines: "#FFFFFF" },
   },
-  nebula: {
-    label: "Nebula",
-    colors: { bgDeep: "#0B0614", panel: "#F5D0FE", cyan: "#F0ABFC", violet: "#A855F7", pink: "#FB7185", gold: "#FDE68A", text: "#F5F3FF", muted: "#C4B5FD" },
+  paper: {
+    label: "Paper",
+    colors: { bg: "#EFEDE7", text: "#141414", muted: "#5C5B57", accent: "#2747D9", panel: "#FFFFFF", lines: "#141414" },
   },
-  aurora: {
-    label: "Aurora",
-    colors: { bgDeep: "#03100F", panel: "#CCFBF1", cyan: "#2DD4BF", violet: "#34D399", pink: "#A3E635", gold: "#FACC15", text: "#ECFDF5", muted: "#99C2B8" },
+  midnight: {
+    label: "Midnight blue",
+    colors: { bg: "#070B1A", text: "#EEF1FF", muted: "#9AA3C7", accent: "#7FA2FF", panel: "#101733", lines: "#C9D4FF" },
   },
-  "midnight-gold": {
-    label: "Midnight Gold",
-    colors: { bgDeep: "#07080D", panel: "#FDE68A", cyan: "#FBBF24", violet: "#FB923C", pink: "#F59E0B", gold: "#FDE047", text: "#FAFAF9", muted: "#A8A29E" },
+  forest: {
+    label: "Forest",
+    colors: { bg: "#08110D", text: "#EDF5EF", muted: "#97ADA0", accent: "#7CE0A9", panel: "#0F1F18", lines: "#D6F2E1" },
   },
 };

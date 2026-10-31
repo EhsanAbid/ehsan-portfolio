@@ -4,11 +4,10 @@ import { AreaEditor } from "@/components/admin/AreaEditor";
 
 const TABS = [
   { id: "profile", label: "Profile" },
-  { id: "socials", label: "Socials" },
+  { id: "works", label: "Projects" },
   { id: "skills", label: "Skills" },
-  { id: "quests", label: "Quests" },
   { id: "journey", label: "Journey" },
-  { id: "lab", label: "Lab" },
+  { id: "socials", label: "Links" },
   { id: "labels", label: "Labels & micro-copy" },
 ] as const;
 
@@ -26,17 +25,31 @@ export default async function ContentPage({ searchParams }: PageProps<"/admin/co
           </Link>
         ))}
       </nav>
-      {tab === "profile" && <AreaEditor key="profile" area="profile" initial={site.profile} />}
-      {tab === "socials" && <AreaEditor key="socials" area="socials" initial={site.socials} />}
+      {tab === "profile" && (
+        <>
+          <p className="mb-3 text-xs text-muted">
+            The portrait photo becomes the block face. A PNG with a transparent background (just you, no backdrop) looks best.
+          </p>
+          <AreaEditor key="profile" area="profile" initial={site.profile} />
+        </>
+      )}
+      {tab === "works" && (
+        <>
+          <p className="mb-3 text-xs text-muted">
+            Every project with a title flies through the 3D view in this order (drag to reorder). Add a cover image so it shows as a picture
+            card; without one it appears as a title card. Tick “Selected work” to list it first in the Work panel.
+          </p>
+          <AreaEditor key="works" area="works" initial={site.works} />
+        </>
+      )}
       {tab === "skills" && (
         <>
-          <p className="mb-3 text-xs text-muted">Each skill&apos;s “Branch id” must match one of the branch ids (programming, web, cs, tools, soft or ones you add).</p>
+          <p className="mb-3 text-xs text-muted">Each skill&apos;s “Group id” must match one of the group ids (programming, web, cs, tools or ones you add).</p>
           <AreaEditor key="skills" area="skills" initial={site.skills} />
         </>
       )}
-      {tab === "quests" && <AreaEditor key="quests" area="quests" initial={site.quests} />}
       {tab === "journey" && <AreaEditor key="journey" area="journey" initial={site.journey} />}
-      {tab === "lab" && <AreaEditor key="lab" area="lab" initial={site.lab} />}
+      {tab === "socials" && <AreaEditor key="socials" area="socials" initial={site.socials} />}
       {tab === "labels" && <AreaEditor key="copy" area="copy" initial={site.copy} />}
     </div>
   );

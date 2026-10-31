@@ -8,7 +8,7 @@ Resume after a stop: read this file + `PROGRESS.md`, check `git status` / `git l
 
 ## Golden rules
 - The site must stay useful before the magic works: name, role and LinkedIn readable within 3 s on a slow phone. Every effect is layered **on top of** a fast, readable base — never in front of it.
-- **Code** (components, animations, admin) lives in git → Vercel. **Content + design** (texts, sections, colours, images, effects, achievements…) lives in Neon and is changed in `/admin` → Publish → live in seconds, no push.
+- **Code** (components, animations, admin) lives in git → Vercel. **Content + design** (texts, projects, colours, images, effects…) lives in Neon and is changed in `/admin` → Publish → live in seconds, no push.
 - The **Zod site schema (`src/schema/site.ts`) is the single source of truth.** Every value the public site uses comes from the published `site_versions` row and is editable in admin. Never hardcode content in components.
 - Missing personal info → `TODO_EHSAN` placeholder; the admin dashboard lists every TODO field (missing-content checklist).
 - Personality: playful but professional (jokes in micro-copy/Easter eggs only); honest (no fake skill %, skills are Mastered / Learning / Locked); one hero effect per screen.
@@ -20,49 +20,24 @@ Resume after a stop: read this file + `PROGRESS.md`, check `git status` / `git l
 - Stop and ask only for: Neon dev connection string, admin email + first password (before seeding), any dependency not listed in the spec, final approval before pushing (Ehsan pushes himself).
 - Chat: one short line per finished phase.
 
-## Concept
-Visitor boots Ehsan like a program → Big Bang forms his name from stars → travels through space where every section is a planet. Ehsan is a game character levelling up: skills = constellation stars, projects = quests, hidden achievements, secret terminal.
-Fusion: OS/terminal (boot, terminal, mono HUD) · RPG (player card, level/XP, skill tree, quests, achievements) · space journey (scroll = warp, planets, mini-map) · particle name · magic details (comet cursor, shooting stars, sky by visitor time, Konami, photo secret, synth sound).
-
-## Scenes (default order; every text/image/colour/switch editable; sections reorderable/hideable/duplicable/addable)
-0. **Boot** (≤2.5 s): typed lines `> initializing ehsan.exe v2.0 ........ OK`, `> loading curiosity ... OK`, `> compiling dreams ... OK`, `> bugs found: 3 · bugs fixed: 3`, `> welcome, explorer.`; progress bar; collapses to a bright point. "Press any key / tap to skip" from frame 1. Full on first visit, 0.6 s mini for returning, skipped for reduced motion. 00:00–05:00 visitor time: one line → "it's late and you're here? respect."
-1. **Big Bang hero**: point explodes into particles assembling EHSAN AHMED ABID; pointer repels, damped springs pull back. Typewriter taglines ("CSE Student @ East West University", "Future Software Engineer", "Bug Hunter", "Always Levelling Up"). HUD player card top-left (mini avatar, "Lv. 2 · CSE Explorer", gold XP bar, "Achievements 0/10"). Top-right: sound toggle (off), sky toggle, terminal icon. Buttons: Start the journey, LinkedIn, Download CV. Name/tagline/buttons are real HTML rendered first; canvas fades in on top.
-2. **Warp travel**: fixed 3D starfield behind everything; scroll velocity stretches stars into streaks; each section has a planet/station drifting in; vertical mini-map (dot per planet, jump) → progress line on mobile.
-3. **Planet Origin (About)**: photo in rotating orbit ring with 3–4 moons (interest icons); 3–5 line story + fun line; stat cards (University, Department, Semester, Based in, Currently learning). Photo ×5 clicks → "Persistent".
-4. **Skill Constellation**: stars on editable branches (Programming, Web, CS Fundamentals, Tools, Soft skills). Mastered = bright cyan; Learning = violet pulsing "unlocking…" ring; Locked = dim "?" with goal on hover. Hover/tap tooltip: status, where used, since when. Accessible list below canvas.
-5. **Quest Log (Projects)**: cards with title, status (Completed/In progress/Planned), difficulty 1–5, tech tags, "Reward: what I learned", GitHub/Live buttons, screenshot. 3D tilt + holographic sheen; filter tabs.
-6. **Journey Orbit (Timeline)**: curved orbit path, checkpoints light while scrolling (school, college, joined EWU CSE, first program, LinkedIn created, website launched, locked "???" future).
-7. **The Lab (Now learning)**: console with 2–4 topics, progress meter, mini oscilloscope sine (frequency rises with progress), "last updated".
-8. **Signal Station (Contact)**: radio dish rings; form (name, email, message) saved to admin Inbox in Neon (no third-party). On send: signal-wave anim + "First Contact". Magnetic LinkedIn/GitHub/Email buttons.
-9. **Footer**: "You've reached the edge of the known universe… for now. Ehsan is still levelling up." Achievement count x/10, "some secrets are still hidden", rocket back-to-top, credit line.
-
-## Magic layer (all parameters editable)
-| Feature | Trigger | Behaviour |
-|---|---|---|
-| Comet cursor | mouse, desktop only | glowing dot + fading trail; grows on links; magnetic main buttons |
-| Sky themes | local time / toggle / terminal | Dawn · Aurora · Dusk · Deep space; editable hour ranges + colours; text contrast never changes |
-| Shooting stars | random interval | click → "Wish Granted" |
-| Achievements | §Achievements | gold toast + chime; HUD counter; progress in localStorage |
-| Hidden terminal | ` or ~ key, or icon | overlay, history ↑/↓, Tab completion |
-| God mode | Konami ↑↑↓↓←→←→BA | 10 s rainbow particles + matrix rain |
-| Synth sound | toggle (off default) | Web Audio API tones, no audio files |
-| Smart greeting | local hour | "Good morning / evening, explorer"; special night boot line |
-
-## Achievements (default 10, editable; add new via trigger types)
-1 Hello World — first visit · 2 Explorer — scroll to footer · 3 Curious Mind — open terminal · 4 sudo — `sudo hire ehsan` · 5 Konami Master · 6 Night Owl — visit 00:00–05:00 · 7 Persistent — photo ×5 · 8 Wish Granted — click shooting star · 9 Stargazer — inspect 5 skill stars · 10 First Contact — send message or click email.
-Editable: name, description, icon, enabled. Trigger types (fixed list): `visit`, `scroll-to-section`, `click-element` (N times), `terminal-command`, `time-window`, `key-sequence`, `form-sent`, each with its parameter.
-
-## Terminal commands
-`help` `whoami` `about` (list/bio) · `skills` `projects` `open <name>` · `cv` `contact` `socials` · `theme night|dawn|aurora|dusk` · `sound on|off` · `achievements` · `matrix` · `sudo hire ehsan` ("Permission granted." confetti + achievement + opens contact) · `coffee` `joke` `clear` `exit` · unknown → "command not found — try 'help'. Ehsan is still learning that one too."
-Admin: add custom text commands, edit every reply, rename or disable built-ins.
+## Design v3 (current — replaces the original "Level-Up Universe" scenes)
+Ehsan asked (2026-10-31) for a redesign modelled on vadimcarazan.com. Built as our own implementation (no copied code/assets):
+- **Hero**: Ehsan's portrait rebuilt from thousands of small **textured blocks** (WebGL instancing, `src/components/world/`). Mostly black & white (tone from the photo, contrast-curved; bright = bigger + closer, shadows sparse), a few vivid "sparkle" blocks, faint background dust. Every block shows a tile from a texture atlas (`atlas.ts`): procedural mini-thumbnails + Ehsan's project images once he adds them. The real photo is never shown — only the blocks (and a pixelated B/W version in the OG image).
+- Mouse ripple pushes/brightens blocks; camera leans toward the mouse.
+- **Signature**: "Abid" written by hand across the background (`Signature.tsx`, stroke-dashoffset loop). Admin can paste a real signature SVG path.
+- Small Inter Tight top bar: logo (initials or uploaded) · Currently · Based in (live Dhaka time) · Navigation (Work, About, Contact). Huge italic Instrument Serif name at the bottom, letters rise in. Intro paragraph + "Explore the work" pill.
+- **Scroll** = the face shatters into a 3D field and the camera flies through it; **only real projects** (Admin → Content → Projects) fly in as cards (image or typographic title card), with a counter "003 · Title · 3 of N works". No projects → end screen "New work is on its way."
+- **Panels** (frosted glass): Work (selected + all), About (headline, story, education, learning, skills, journey, links, CV), Contact (form → Inbox), one per project. Hash URLs (#about, #work-<id>), Escape closes; `:target` fallback without JS.
+- Short logo loader (CSS-timed). Hidden terminal (backtick key) kept as an Easter egg. Removed: boot sequence, starfield/planets, HUD/level, achievements, comet cursor, sound.
+- Reduced motion / no WebGL / no JS: static 2D block poster + a normal project grid.
+- Layout constants shared by scene, spacer and counter: `src/components/world/layout.ts`. Shared runtime state: `world/store.ts` (on globalThis, so the page bundle and the lazy 3D chunk share one copy).
 
 ## Admin — Mission Control (`/admin`, schema-driven: forms generated from the Zod schema)
-- **Dashboard**: unpublished-changes counter + Publish, missing-content checklist (every TODO_EHSAN), unread messages, visits + unlock counts, last published.
-- **Sections**: drag order, show/hide, duplicate, delete, rename, nav label, anchor. Add types: About, Skills, Quests, Journey, Lab, Contact, Custom text, Custom cards, Gallery, Video/Link embed, Quote, Call-to-action. Per section: title, subtitle, planet colour/size/ring, background mood.
-- **Content**: profile (name, taglines, bio, location, photo, CV), skills, quests, journey, lab, socials, fun facts, jokes — CRUD + reorder. Rich text: bold, italic, links, lists.
-- **Design**: colour tokens + pickers + contrast checker (warn < 4.5:1), presets (Deep Space, Nebula, Aurora, Midnight Gold), heading/body/mono fonts from curated free list, radius, glass blur/opacity, button style, cursor style, spacing scale; live preview.
-- **Effects**: boot (lines, duration, show-once), particles (count per tier, repel, colours), starfield density, warp intensity, shooting-star interval, sky schedule, sound default/volume, comet trail, Konami, quality-controller thresholds.
-- **Game**: HUD labels, level titles, XP rules, achievements, terminal commands.
+- **Dashboard**: unpublished-changes counter + Publish, missing-content checklist (every TODO_EHSAN), unread messages, visits, last published.
+- **Content**: Profile (name, currently, location + time zone, intro, portrait photo, logo, about headline + story, CV, education, learning), Projects (title, category, year, status, selected, summary, details, tags, cover + gallery, links — drag to reorder = flight order), Skills, Journey, Links, Labels. Rich text: bold, italic, links, lists.
+- **Design**: presets (Ink, Paper, Midnight, Forest), colour tokens (background, text, muted, accent, panel, signature line) + pickers + contrast checker (warn < 4.5:1), display/italic/body fonts from a curated free list, name size, radius, glass blur/opacity; live preview.
+- **Effects**: loader, block portrait (blocks per tier, gap, black & white amount, sparkle colours, depth, dust, brightness, shimmer, ripple, crop, size, offset), scroll flight, signature (path, width, opacity, timing, size), motion, quality-controller thresholds.
+- **Terminal**: welcome, prompt, commands + every reply.
 - **Media**: upload images/PDFs; auto WebP + resize; required alt text; where-used; replace/delete.
 - **Inbox**: read/unread, reply via mailto, spam, delete, CSV export.
 - **SEO**: title, description, OG image (upload or auto-generated), favicon, keywords, JSON-LD Person, indexing on/off.
@@ -73,9 +48,9 @@ Admin: add custom text commands, edit every reply, rename or disable built-ins.
 - Honest limit: brand-new animation/section *kinds* are code (ask Claude Code); once built they appear in admin automatically via the schema.
 
 ## Design tokens (defaults, all editable)
-`--bg-deep #05060F` · `--panel rgba(255,255,255,0.05)+blur` · `--cyan #22D3EE` (primary, mastered, links) · `--violet #8B5CF6` (secondary, learning, planets) · `--pink #F472B6` (highlights, dawn) · `--gold #FBBF24` (XP, achievements) · `--text #E5E7EB` / `--muted #94A3B8` (≥ 4.5:1).
-Fonts via next/font (self-hosted): Space Grotesk (headings), Inter (body), JetBrains Mono (boot/HUD/terminal).
-Motion: entrances 400–800 ms expo-out; one big effect at a time; ambient loops < 1 Hz; no scroll-jacking. Reduced motion: no boot, no particles, static stars, fades only.
+`--bg #0A0A0A` · `--fg` text · `--fg-muted` · `--accent #9DB8FF` · `--panel-bg #171717` (frosted glass) · `--line` (signature). Presets: Ink (default), Paper, Midnight, Forest.
+Fonts via next/font (self-hosted): Instrument Serif (display + italic name), Inter Tight (body/UI); more curated free fonts declared without preload.
+Motion: letters rise in, loader ≤ 1.3 s (0.45 s returning), portrait shatter + fly on scroll; no scroll-jacking. Reduced motion: static 2D block poster, project grid, fades only.
 Tokens become CSS variables at render time → colour change needs no rebuild.
 
 ## Stack (all free — do not add others without asking)
@@ -130,8 +105,7 @@ src/app/api/                      contact, stats, upload, auth
 src/schema/site.ts                Zod schema of the ENTIRE site
 src/db/ (schema.ts, client.ts, seed.ts, migrate.ts)
 src/lib/ (auth.ts, publish.ts, media.ts, rateLimit.ts, storage.ts, sound.ts, fps.ts, …)
-src/components/ boot/ hero/ space/ terminal/ achievements/ cursor/ ui/ admin/
-src/sections/ About Skills Quests Journey Lab Contact Footer Custom*
+src/components/ world/ (WebGL block portrait + flight) site/ (page, panels, signature) terminal/ ui/ admin/
 ```
 
 ## Phases (done when)

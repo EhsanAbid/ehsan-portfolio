@@ -17,15 +17,13 @@ function panelOver(bg: string, tint: string, alpha: number) {
 
 function ContrastChecker({ d }: { d: Design }) {
   const c = d.colors;
-  const panel = panelOver(c.bgDeep, c.panel, d.glassOpacity);
+  const panel = panelOver(c.bg, c.panel, d.glassOpacity);
   const pairs: [string, string, string][] = [
-    ["Body text on background", c.text, c.bgDeep],
-    ["Body text on glass panels", c.text, panel],
-    ["Secondary text on background", c.muted, c.bgDeep],
+    ["Text on background", c.text, c.bg],
+    ["Text on glass panels", c.text, panel],
+    ["Secondary text on background", c.muted, c.bg],
     ["Secondary text on panels", c.muted, panel],
-    ["Links / accent on background", c.cyan, c.bgDeep],
-    ["Learning (violet) on background", c.violet, c.bgDeep],
-    ["XP gold on background", c.gold, c.bgDeep],
+    ["Accent on background", c.accent, c.bg],
   ];
   return (
     <div className="a-card p-4">
@@ -75,7 +73,7 @@ export function DesignStudio({ initial }: { initial: Design }) {
                   onClick={() => change({ ...value, preset: id as Design["preset"], colors: { ...p.colors } })}
                 >
                   <span className="flex gap-0.5" aria-hidden>
-                    {[p.colors.bgDeep, p.colors.cyan, p.colors.violet, p.colors.gold].map((c) => (
+                    {[p.colors.bg, p.colors.text, p.colors.accent, p.colors.panel].map((c) => (
                       <span key={c} className="size-3 rounded-full border border-white/20" style={{ background: c }} />
                     ))}
                   </span>

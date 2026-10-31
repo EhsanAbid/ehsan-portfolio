@@ -52,7 +52,13 @@ export { mediaUrl } from "./mediaUrl";
  * The content hash becomes the URL, so identical uploads are stored once and the URL can be
  * cached forever ("immutable") — a new image always gets a new URL.
  */
-export async function storeUpload(input: Buffer, filename: string, alt: string): Promise<StoredMedia> {
+export async function storeUpload(
+  input: Buffer,
+  filename: string,
+  alt: string,
+  /** The seed may pass a bigger limit for local files (they are resized anyway). */
+  opts: { maxImageBytes?: number } = {},
+): Promise<StoredMedia> {
   const kind = sniff(input);
   if (!kind) throw new MediaError("Unsupported file type. Use JPEG, PNG, WebP, GIF, AVIF or PDF.");
 
@@ -66,7 +72,7 @@ export async function storeUpload(input: Buffer, filename: string, alt: string):
     bytes = input;
     mime = "application/pdf";
   } else {
-    if (input.length > IMAGE_MAX_BYTES) throw new MediaError("Image is larger than 4 MB.");
+    if (input.length > (opts.maxImageBytes ?? IMAGE_MAX_BYTES)) throw new MediaError("Image is larger than 4 MB.");
     const out = await sharp(input, { animated: false, limitInputPixels: 40_000_000 })
       .rotate()
       .resize({ width: IMAGE_MAX_SIDE, height: IMAGE_MAX_SIDE, fit: "inside", withoutEnlargement: true })

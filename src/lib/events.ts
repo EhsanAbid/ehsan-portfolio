@@ -1,34 +1,27 @@
 /**
- * A tiny event bus between independent client islands (terminal, HUD, achievements,
- * sky, sound…). Built on window CustomEvents, so islands never import each other.
+ * A tiny event bus between independent client islands (3D cards, panels, terminal).
+ * Built on window CustomEvents, so islands never import each other.
  */
 export type EventMap = {
-  sky: { id: string | "next" | "auto" };
-  sound: { on: boolean };
-  "terminal-open": Record<string, never>;
+  /** Open a panel: "about" | "work" | "contact" | "work-<projectId>" | "" (close). */
+  "open-panel": { id: string };
   "terminal-toggle": Record<string, never>;
-  "god-mode": Record<string, never>;
-  matrix: Record<string, never>;
-  confetti: Record<string, never>;
-  /** Generic hooks the achievements engine listens to. */
-  trigger: { type: string; param?: string; key?: string };
-  unlocked: { id: string };
-  "boot-done": Record<string, never>;
 };
 
 export function emit<K extends keyof EventMap>(name: K, detail: EventMap[K]) {
-  window.dispatchEvent(new CustomEvent(`ehsan:${name}`, { detail }));
+  window.dispatchEvent(new CustomEvent(`site:${name}`, { detail }));
 }
 
 export function on<K extends keyof EventMap>(name: K, fn: (detail: EventMap[K]) => void) {
   const h = (e: Event) => fn((e as CustomEvent<EventMap[K]>).detail);
-  window.addEventListener(`ehsan:${name}`, h);
-  return () => window.removeEventListener(`ehsan:${name}`, h);
+  window.addEventListener(`site:${name}`, h);
+  return () => window.removeEventListener(`site:${name}`, h);
 }
 
-/** Is the boot overlay still running? (set by the inline boot script, finished by BootControl) */
-export function bootRunning() {
-  if (typeof window === "undefined") return false;
-  if ((window as unknown as { __bootDone?: boolean }).__bootDone) return false;
-  return ["full", "mini"].includes(document.documentElement.dataset.boot ?? "");
+/** Scroll to a position (in screens), through Lenis when smooth scrolling is on. */
+export function scrollToScreens(screens: number, immediate = false) {
+  const y = screens * innerHeight;
+  const lenis = (window as unknown as { __lenis?: { scrollTo: (t: number, o?: object) => void } }).__lenis;
+  if (lenis) lenis.scrollTo(y, { immediate, duration: 1.6 });
+  else scrollTo({ top: y, behavior: immediate || matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
 }

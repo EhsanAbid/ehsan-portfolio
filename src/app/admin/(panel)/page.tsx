@@ -13,12 +13,12 @@ export default async function Dashboard() {
   const todos = findTodos(site);
   const grouped = Object.groupBy(todos, (t) => t.path.split(/[.[]/)[0]);
   const stat = (k: string) => stats.find((s) => s.key === k)?.count ?? 0;
-  const unlocks = site.game.achievements.map((a) => ({ a, n: stat(`unlock:${a.id}`) }));
 
   const cards = [
     { label: "Unpublished changes", value: changes, hint: hasDraft ? "draft in progress" : "nothing pending" },
     { label: "Missing content", value: todos.length, hint: "TODO_EHSAN fields" },
     { label: "Unread messages", value: unread, hint: "in the Inbox", href: "/admin/inbox" },
+    { label: "Projects", value: site.works.length, hint: "in the 3D flight", href: "/admin/content?tab=works" },
     { label: "Visits", value: stat("visits"), hint: "unique sessions" },
   ];
 
@@ -31,7 +31,7 @@ export default async function Dashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {cards.map((c) => {
           const inner = (
             <>
@@ -78,19 +78,6 @@ export default async function Dashboard() {
         )}
       </section>
 
-      <section className="a-card p-5" aria-labelledby="ach-h">
-        <h2 id="ach-h" className="mb-3 text-lg font-semibold text-white">Achievement unlocks</h2>
-        <ul className="grid gap-2 sm:grid-cols-2">
-          {unlocks.map(({ a, n }) => (
-            <li key={a.id} className="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-2 text-sm">
-              <span>
-                {a.icon} {a.name}
-              </span>
-              <span className="mono text-gold">{n}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
     </div>
   );
 }

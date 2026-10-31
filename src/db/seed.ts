@@ -57,7 +57,7 @@ async function seedAssets(): Promise<StoredMedia[]> {
   for (const f of files) {
     try {
       const alt = path.parse(f).name.replace(/[-_]+/g, " ");
-      const m = await storeUpload(readFileSync(path.join(dir, f)), f, alt);
+      const m = await storeUpload(readFileSync(path.join(dir, f)), f, alt, { maxImageBytes: 60 * 1024 * 1024 });
       stored.push(m);
       console.log(`[seed] media: ${f} → /media/${m.key} (${Math.round(m.size / 1024)} KB)`);
     } catch (err) {
@@ -69,7 +69,7 @@ async function seedAssets(): Promise<StoredMedia[]> {
 
 /** Attach obvious assets: a photo-like image becomes the profile photo, a CV-like PDF the CV. */
 function attachAssets(site: Site, media: StoredMedia[]) {
-  const photo = media.find((m) => m.mime.startsWith("image/") && /photo|profile|avatar|me|ehsan/i.test(m.filename))
+  const photo = media.find((m) => m.mime.startsWith("image/") && /photo|profile|portrait|avatar|ehsan|abid/i.test(m.filename))
     ?? media.find((m) => m.mime.startsWith("image/"));
   if (photo) site.profile.photo = toRef({ ...photo, alt: `Photo of ${site.profile.name}` });
   const cv = media.find((m) => m.mime === "application/pdf" && /cv|resume|résumé/i.test(m.filename))
@@ -96,7 +96,7 @@ async function seedContent(media: StoredMedia[]) {
   await db.insert(schema.siteVersions).values({
     status: "published",
     data: site,
-    note: "Initial seed (defaults from the spec)",
+    note: "Initial seed (defaults)",
     publishedAt: new Date(),
   });
   console.log("[seed] published the default site version.");

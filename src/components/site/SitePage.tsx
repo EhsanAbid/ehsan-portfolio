@@ -1,62 +1,30 @@
 import type { ReactNode } from "react";
-import type { Section, Site } from "@/schema/site";
+import type { Site } from "@/schema/site";
 import { SiteStyles } from "@/components/ui/SiteStyles";
-import { Hero } from "@/components/hero/Hero";
-import { About } from "@/sections/About";
-import { Skills } from "@/sections/Skills";
-import { Quests } from "@/sections/Quests";
-import { Journey } from "@/sections/Journey";
-import { Lab } from "@/sections/Lab";
-import { Contact } from "@/sections/Contact";
-import { Cta, CustomCards, CustomText, Embed, Gallery, Quote } from "@/sections/Custom";
-import { Footer } from "@/sections/Footer";
-import { sectionAnchor, type Ctx } from "@/sections/shared";
-import { Universe } from "@/components/space/Universe";
-import { Boot } from "@/components/boot/Boot";
-import { ContactForm } from "@/sections/ContactForm";
-import { Interactions } from "@/components/ui/Interactions";
-import { MagicLazy } from "@/components/magic/MagicLazy";
-import { magicProps } from "@/components/magic/magicData";
+import { World } from "@/components/world/World";
+import { spacerScreens, flightEnd } from "@/components/world/layout";
+import { TerminalLauncher } from "@/components/terminal/TerminalLauncher";
+import { terminalData } from "@/components/terminal/terminalData";
 import { personJsonLd } from "@/lib/seo";
-
-function renderSection(ctx: Ctx, s: Section): ReactNode {
-  switch (s.type) {
-    case "about":
-      return <About key={s.id} ctx={ctx} section={s} />;
-    case "skills":
-      return <Skills key={s.id} ctx={ctx} section={s} />;
-    case "quests":
-      return <Quests key={s.id} ctx={ctx} section={s} />;
-    case "journey":
-      return <Journey key={s.id} ctx={ctx} section={s} />;
-    case "lab":
-      return <Lab key={s.id} ctx={ctx} section={s} />;
-    case "contact":
-      return <Contact key={s.id} ctx={ctx} section={s} form={<ContactForm labels={ctx.site.copy.contact} />} />;
-    case "text":
-      return <CustomText key={s.id} ctx={ctx} section={s} />;
-    case "cards":
-      return <CustomCards key={s.id} ctx={ctx} section={s} />;
-    case "gallery":
-      return <Gallery key={s.id} ctx={ctx} section={s} />;
-    case "embed":
-      return <Embed key={s.id} ctx={ctx} section={s} />;
-    case "quote":
-      return <Quote key={s.id} ctx={ctx} section={s} />;
-    case "cta":
-      return <Cta key={s.id} ctx={ctx} section={s} />;
-  }
-}
+import { filled } from "@/lib/todo";
+import { Loader, initialsOf } from "./Loader";
+import { TopBar } from "./TopBar";
+import { Hero } from "./Hero";
+import { Signature } from "./Signature";
+import { FlightHud } from "./FlightHud";
+import { EndScreen } from "./EndScreen";
+import { WorksGrid } from "./WorksGrid";
+import { AboutPanel, ContactPanel, ProjectPanel, WorkPanel, publishedWorks } from "./Panels";
+import { PanelHost } from "./PanelHost";
 
 export function Maintenance({ site }: { site: Site }) {
   const m = site.advanced.maintenance;
   return (
-    <div className="site-root flex min-h-screen items-center justify-center px-6 text-center">
+    <div className="s-root flex min-h-screen flex-col justify-end p-6 md:p-8">
       <SiteStyles site={site} />
       <main>
-        <p className="eyebrow mb-4">{site.copy.hero.eyebrow}</p>
-        <h1 className="text-4xl font-bold text-white md:text-6xl">{m.title}</h1>
-        <p className="mx-auto mt-4 max-w-xl text-muted">{m.message}</p>
+        <h1 className="s-name !translate-y-0 !whitespace-normal !text-[clamp(3rem,10vw,9rem)]">{m.title}</h1>
+        <p className="s-label mt-4 max-w-xl">{m.message}</p>
       </main>
     </div>
   );
@@ -65,15 +33,23 @@ export function Maintenance({ site }: { site: Site }) {
 /**
  * The whole public website for one site document. Used by the live page (published
  * version) and by /preview (draft) — same components, so Preview is truthful.
+ *
+ * Layers, back to front: block portrait (WebGL, fixed) → hand-drawn lines → page content
+ * (hero, a tall spacer that drives the flight, end screen) → top bar + flight counter → panels.
  */
 export function SitePage({ site, preview = false, badge }: { site: Site; preview?: boolean; badge?: ReactNode }) {
-  const ctx: Ctx = { site, preview };
   if (site.advanced.maintenance.enabled && !preview) return <Maintenance site={site} />;
-  const sections = site.sections.filter((s) => s.enabled);
+  const works = publishedWorks(site);
+  const fl = site.effects.flight;
+  const perWork = fl.scrollPerWork;
+  const socials = site.socials.filter((s) => filled(s.url)).map((s) => ({ label: s.label, url: s.url }));
+  const flightOn = fl.enabled;
+  const c = site.design.colors;
+
   return (
-    <div className="site-root" data-btn={site.design.buttonStyle} data-cursor={site.design.cursorStyle}>
+    <div className="s-root">
       <SiteStyles site={site} />
-      {!preview && <Boot site={site} />}
+      <Loader site={site} />
       {!preview && (
         <script
           type="application/ld+json"
@@ -81,24 +57,63 @@ export function SitePage({ site, preview = false, badge }: { site: Site; preview
           dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd(site)).replace(/</g, "\\u003c") }}
         />
       )}
-      <a className="skip-link" href="#content">
-        {site.copy.nav.skipToContent}
+      <a className="s-skip" href="#content">
+        {site.copy.a11y.skipToContent}
       </a>
-      <Universe
+
+      <World
+        photoKey={site.profile.photo.key || null}
+        imageKeys={works.flatMap((w) => [w.image, ...w.gallery]).map((m) => m.key).filter(Boolean)}
+        initials={initialsOf(site.profile.name)}
         effects={site.effects}
-        colors={{ cyan: site.design.colors.cyan, violet: site.design.colors.violet }}
-        mapLabel={site.copy.nav.miniMapLabel}
-        stops={[
-          { id: "top", label: site.profile.shortName, color: site.design.colors.cyan },
-          ...sections.map((s) => ({ id: sectionAnchor(s), label: s.navLabel || s.title, color: s.planet.color })),
-        ]}
+        works={(flightOn ? works : []).map((w) => ({
+          id: w.id,
+          title: w.title,
+          category: w.category,
+          imageKey: w.image.key || null,
+          aspect: w.image.width && w.image.height ? w.image.height / w.image.width : 0.75,
+        }))}
+        colors={{ panel: c.panel, text: c.text, muted: c.muted }}
       />
+      <p className="sr-only">{site.copy.a11y.portrait}</p>
+      {site.effects.signature.enabled && (
+        <Signature
+          path={site.effects.signature.path.trim()}
+          width={site.effects.signature.width}
+          opacity={site.effects.signature.opacity}
+          drawSec={site.effects.signature.drawSec}
+          holdSec={site.effects.signature.holdSec}
+          size={site.effects.signature.size}
+        />
+      )}
+
+      <TopBar site={site} />
       {badge}
-      <Hero ctx={ctx} />
-      <main id="content">{sections.map((s) => renderSection(ctx, s))}</main>
-      <Footer ctx={ctx} />
-      <Interactions tilt={site.effects.motion.tilt} />
-      <MagicLazy {...magicProps(site)} />
+
+      <main id="content">
+        <Hero site={site} />
+        {flightOn && <div className="s-flight" aria-hidden style={{ height: `${spacerScreens(works.length, perWork) * 100}svh` }} />}
+        <WorksGrid site={site} />
+        <EndScreen site={site} />
+      </main>
+
+      {flightOn && (
+        <FlightHud
+          works={works.map((w) => ({ id: w.id, title: w.title, category: w.category, year: w.year }))}
+          socials={socials}
+          end={flightEnd(works.length, perWork)}
+          labels={site.copy.flight}
+        />
+      )}
+
+      <AboutPanel site={site} />
+      <WorkPanel site={site} />
+      {works.map((w) => (
+        <ProjectPanel key={w.id} site={site} w={w} />
+      ))}
+      <ContactPanel site={site} />
+      <PanelHost workIds={works.map((w) => w.id)} perWork={perWork} />
+      <TerminalLauncher data={terminalData(site)} />
     </div>
   );
 }

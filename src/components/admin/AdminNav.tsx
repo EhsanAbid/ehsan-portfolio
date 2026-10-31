@@ -5,11 +5,10 @@ import { usePathname } from "next/navigation";
 
 export const ADMIN_LINKS = [
   { href: "/admin", label: "Dashboard", icon: "◎" },
-  { href: "/admin/sections", label: "Sections", icon: "☰" },
   { href: "/admin/content", label: "Content", icon: "✎" },
   { href: "/admin/design", label: "Design", icon: "◐" },
   { href: "/admin/effects", label: "Effects", icon: "✦" },
-  { href: "/admin/game", label: "Game", icon: "🎮" },
+  { href: "/admin/terminal", label: "Terminal", icon: ">_" },
   { href: "/admin/media", label: "Media", icon: "▣" },
   { href: "/admin/inbox", label: "Inbox", icon: "✉" },
   { href: "/admin/seo", label: "SEO & sharing", icon: "⌕" },

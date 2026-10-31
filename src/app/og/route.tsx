@@ -1,6 +1,35 @@
 import { ImageResponse } from "next/og";
+import { eq } from "drizzle-orm";
+import sharp from "sharp";
+import { cacheLife } from "next/cache";
+import { getDb, schema } from "@/db/client";
 import { getPublishedSite } from "@/lib/site";
-import { computeLevel } from "@/lib/level";
+
+/**
+ * The portrait turned into black & white blocks (never the real photo): shrink it to a tiny
+ * grid, then scale back up with "nearest neighbour" so every pixel becomes a hard square.
+ * Read straight from the database (no network fetch).
+ */
+async function photoDataUrl(key: string) {
+  "use cache"; // the bytes behind a media key never change
+  cacheLife("max");
+  const [row] = await getDb()
+    .select({ bytes: schema.media.bytes })
+    .from(schema.media)
+    .where(eq(schema.media.hash, key.split(".")[0]))
+    .limit(1);
+  if (!row) return null;
+  const crop = await sharp(row.bytes).metadata();
+  const h = Math.round((crop.height ?? 1000) * 0.62);
+  const png = await sharp(row.bytes)
+    .extract({ left: 0, top: 0, width: crop.width ?? 1000, height: Math.min(h, crop.height ?? h) })
+    .greyscale()
+    .resize({ height: 56 })
+    .resize({ height: 600, kernel: "nearest" })
+    .png()
+    .toBuffer();
+  return `data:image/png;base64,${png.toString("base64")}`;
+}
 
 /**
  * GET /og — the auto-generated 1200×630 share image (LinkedIn preview card), used when no
@@ -9,45 +38,24 @@ import { computeLevel } from "@/lib/level";
  */
 export async function GET() {
   const site = await getPublishedSite();
-  const name = site?.profile.name ?? "ehsan.exe";
-  const role = site?.profile.role ?? "";
+  const name = site?.profile.name ?? "Portfolio";
   const c = site?.design.colors;
-  const lvl = site ? computeLevel(site) : null;
-  const stars = Array.from({ length: 70 }, (_, i) => ({
-    x: (i * 137.5) % 1200,
-    y: (i * 89.3) % 630,
-    s: 1 + ((i * 7) % 3),
-  }));
+  const photo = site?.profile.photo.key ? await photoDataUrl(site.profile.photo.key) : null;
 
   return new ImageResponse(
     (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          padding: "80px",
-          background: `radial-gradient(circle at 75% 20%, ${c?.violet ?? "#8B5CF6"}55, transparent 55%), ${c?.bgDeep ?? "#05060F"}`,
-          color: c?.text ?? "#E5E7EB",
-          position: "relative",
-        }}
-      >
-        {stars.map((s, i) => (
-          <div key={i} style={{ position: "absolute", left: s.x, top: s.y, width: s.s, height: s.s, borderRadius: 9, background: "white", opacity: 0.6 }} />
-        ))}
-        <div style={{ display: "flex", fontSize: 26, color: c?.cyan ?? "#22D3EE", letterSpacing: 4 }}>{site?.copy.hero.eyebrow ?? ""}</div>
-        <div style={{ display: "flex", fontSize: 92, fontWeight: 800, color: "white", marginTop: 18, lineHeight: 1 }}>{name}</div>
-        <div style={{ display: "flex", fontSize: 38, color: c?.cyan ?? "#22D3EE", marginTop: 26 }}>{role}</div>
-        {lvl && (
-          <div style={{ display: "flex", alignItems: "center", marginTop: 46, fontSize: 26, color: c?.gold ?? "#FBBF24" }}>
-            {`${site!.game.hud.levelPrefix} ${lvl.level} · ${lvl.title}`}
-            <div style={{ display: "flex", marginLeft: 24, width: 260, height: 12, borderRadius: 12, background: "rgba(255,255,255,0.15)" }}>
-              <div style={{ width: `${Math.max(6, lvl.progress * 100)}%`, height: 12, borderRadius: 12, background: c?.gold ?? "#FBBF24" }} />
-            </div>
-          </div>
+      <div style={{ width: "100%", height: "100%", display: "flex", position: "relative", background: c?.bg ?? "#0A0A0A", color: c?.text ?? "#F2F2F0" }}>
+        {photo && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={photo} alt="" width={520} height={590} style={{ position: "absolute", right: 60, top: 40, objectFit: "contain", opacity: 0.95 }} />
         )}
+        <div style={{ display: "flex", flexDirection: "column", position: "absolute", left: 64, top: 56, fontSize: 24, color: c?.muted ?? "#A3A3A0" }}>
+          <span>{site?.copy.top.currently ?? ""}</span>
+          <span style={{ color: c?.text ?? "#F2F2F0" }}>{site?.profile.currently ?? ""}</span>
+        </div>
+        <div style={{ display: "flex", position: "absolute", left: 56, bottom: 36, fontSize: 132, fontStyle: "italic", letterSpacing: -5, lineHeight: 0.9, fontFamily: "serif", maxWidth: 1100 }}>
+          {name}
+        </div>
       </div>
     ),
     { width: 1200, height: 630 },
