@@ -95,7 +95,7 @@ const fragment = /* glsl */ `
     // The tile provides the detail, the block's tone sets how bright it is: a dark block shows a
     // dim thumbnail, a lit block a bright one. Vivid tiles keep their own colours.
     float tone = dot(vColor, vec3(0.299, 0.587, 0.114));
-    vec3 textured = tex * (0.25 + tone * 1.55);
+    vec3 textured = tex * (0.32 + tone * 1.7);
     gl_FragColor = vec4(mix(vColor, textured, uTex), a);
   }
 `;
@@ -143,7 +143,7 @@ class BlockSim {
       color.set([c.r, c.g, c.b], i * 3);
       seed[i] = rand();
       // Bright = full-size block, dark = small block: the face is "drawn" by block size too.
-      size[i] = cell * (1 - cfg.gap) * (0.35 + 0.65 * c.lum);
+      size[i] = cell * (1 - cfg.gap) * (0.45 + 0.55 * c.lum);
       tile[i] = pickTile(c.spark ? atlas.vivid : atlas.neutral);
     }
     // Dust: a few hundred faint tiles floating behind the portrait (and joining the field later).

@@ -34,7 +34,7 @@ export function Maintenance({ site }: { site: Site }) {
  * The whole public website for one site document. Used by the live page (published
  * version) and by /preview (draft) — same components, so Preview is truthful.
  *
- * Layers, back to front: block portrait (WebGL, fixed) → hand-drawn lines → page content
+ * Layers, back to front: signature → block portrait (WebGL, fixed) → page content
  * (hero, a tall spacer that drives the flight, end screen) → top bar + flight counter → panels.
  */
 export function SitePage({ site, preview = false, badge }: { site: Site; preview?: boolean; badge?: ReactNode }) {
@@ -61,6 +61,16 @@ export function SitePage({ site, preview = false, badge }: { site: Site; preview
         {site.copy.a11y.skipToContent}
       </a>
 
+      {site.effects.signature.enabled && (
+        <Signature
+          path={site.effects.signature.path.trim()}
+          opacity={site.effects.signature.opacity}
+          drawSec={site.effects.signature.drawSec}
+          holdSec={site.effects.signature.holdSec}
+          size={site.effects.signature.size}
+          shiftX={site.effects.portrait.enabled ? site.effects.portrait.offsetX : 0}
+        />
+      )}
       <World
         photoKey={site.profile.photo.key || null}
         imageKeys={works.flatMap((w) => [w.image, ...w.gallery]).map((m) => m.key).filter(Boolean)}
@@ -76,17 +86,6 @@ export function SitePage({ site, preview = false, badge }: { site: Site; preview
         colors={{ panel: c.panel, text: c.text, muted: c.muted }}
       />
       <p className="sr-only">{site.copy.a11y.portrait}</p>
-      {site.effects.signature.enabled && (
-        <Signature
-          path={site.effects.signature.path.trim()}
-          width={site.effects.signature.width}
-          opacity={site.effects.signature.opacity}
-          drawSec={site.effects.signature.drawSec}
-          holdSec={site.effects.signature.holdSec}
-          size={site.effects.signature.size}
-        />
-      )}
-
       <TopBar site={site} />
       {badge}
 

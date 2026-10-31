@@ -53,7 +53,7 @@ function drawPoster(canvas: HTMLCanvasElement, sample: Sample, p: Site["effects"
   const tileSize = atlas ? atlas.canvas.width / ATLAS_GRID : 0;
   let k = 0;
   for (const c of sample.cells) {
-    const s = cell * (1 - p.gap) * (0.35 + 0.65 * c.lum);
+    const s = cell * (1 - p.gap) * (0.45 + 0.55 * c.lum);
     const x = left + c.x * cell + (cell - s) / 2;
     const y = top + c.y * cell + (cell - s) / 2;
     if (atlas) {
@@ -61,7 +61,7 @@ function drawPoster(canvas: HTMLCanvasElement, sample: Sample, p: Site["effects"
       const pool = c.spark ? atlas.vivid : atlas.neutral;
       const t = pool[(k++ * 7919) % pool.length];
       g.drawImage(atlas.canvas, (t % ATLAS_GRID) * tileSize + 3, Math.floor(t / ATLAS_GRID) * tileSize + 3, tileSize - 6, tileSize - 6, x, y, s, s);
-      g.fillStyle = `rgba(0,0,0,${Math.max(0, 1 - (0.25 + c.lum * 1.4) * p.brightness)})`;
+      g.fillStyle = `rgba(0,0,0,${Math.max(0, 1 - (0.32 + c.lum * 1.55) * p.brightness)})`;
       g.fillRect(x, y, s, s);
     } else {
       const b = p.brightness * 255;

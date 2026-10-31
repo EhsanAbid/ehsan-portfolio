@@ -157,20 +157,24 @@ body {
   z-index: 0;
   pointer-events: none;
 }
-/* The signature floats across the hero, slightly tilted like a real autograph. */
+/* The signature sits behind the block face (same layer, earlier in the page), slightly tilted like an autograph. */
 .s-sign {
   position: fixed;
-  z-index: 1;
+  z-index: 0;
   left: 50%;
-  top: 46%;
+  top: 34%;
+  width: max(var(--sign-w), 90vw);
   height: auto;
   pointer-events: none;
   overflow: visible;
-  transform: translate(-50%, -50%) rotate(-7deg);
+  transform: translate(-50%, -50%) rotate(-5deg);
 }
-@media (max-width: 899px) {
+/* Desktop: centred on the head, which is shifted right by the portrait's offset setting. */
+@media (min-width: 900px) {
   .s-sign {
-    top: 34%;
+    left: calc(50% + var(--sign-x, 0) * 100%);
+    top: 40%;
+    width: var(--sign-w);
   }
 }
 
@@ -336,15 +340,14 @@ body {
   font-size: calc(clamp(4.2rem, 20vw, 16rem) * var(--name-scale));
   line-height: 0.86;
   letter-spacing: -0.035em;
-  /* the bottom of the letters runs off the screen on purpose, like a title card */
-  transform: translateY(0.1em);
+  /* room below the baseline so the italic letters are never clipped by the screen edge */
+  padding-bottom: 0.08em;
 }
 @media (min-width: 900px) {
   .s-name {
     padding: 0 1.6rem;
     white-space: nowrap;
     font-size: calc(min(var(--fit, 15.8vw), 30vh) * var(--name-scale));
-    transform: translateY(0.18em);
   }
 }
 .s-name .w {
@@ -433,6 +436,16 @@ html.s-fly .s-grid {
   justify-content: center;
   padding: 6rem 1.25rem;
   pointer-events: none;
+  isolation: isolate;
+}
+/* a soft dark pool behind the text so the flying blocks don't fight with it */
+.s-end::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse 65% 55% at 24% 50%, color-mix(in srgb, var(--bg) 94%, transparent) 30%, transparent 80%);
 }
 .s-end > * {
   pointer-events: auto;

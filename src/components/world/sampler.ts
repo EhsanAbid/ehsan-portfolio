@@ -69,7 +69,7 @@ function readCells(ctx: CanvasRenderingContext2D, cols: number, rows: number, o:
       let t = Math.min(1, Math.max(0, (raw - 0.06) / 0.8));
       t = t * t * (3 - 2 * t);
       // Deep shadows: mostly empty, with a few dim blocks so the outline still reads.
-      if (t < 0.06 && rand() > 0.35) continue;
+      if (t < 0.06 && rand() > 0.45) continue;
       // Black & white: blend the photo colour toward its grey value.
       let r = pr * (1 - o.mono) + t * o.mono;
       let g = pg * (1 - o.mono) + t * o.mono;

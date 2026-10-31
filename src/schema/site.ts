@@ -175,13 +175,12 @@ const effectsSchema = group("Effects", {
       .meta({
         label: "Signature (SVG path data, optional)",
         widget: "code",
-        help: "Empty = the built-in “Abid” signature. To use your real one: draw it as a single SVG path in a 1000×400 box and paste the d=\"…\" value here.",
+        help: "Empty = your traced “Abid” signature. To use another: paste the d=\"…\" value of a filled SVG outline in a 1000×400 box.",
       }),
-    width: num("Line width", 1.6, 0.5, 4, { unit: "px", step: 0.1 }),
-    opacity: num("Opacity", 0.6, 0.1, 1, { step: 0.05 }),
+    opacity: num("Opacity", 0.32, 0.05, 1, { step: 0.01 }),
     drawSec: num("Writing time", 4.5, 1.5, 12, { unit: "s", step: 0.5 }),
     holdSec: num("Stays visible for", 6, 1, 30, { unit: "s", step: 0.5 }),
-    size: num("Size (share of screen width)", 0.95, 0.4, 1.4, { step: 0.05 }),
+    size: num("Size (share of screen width)", 0.55, 0.3, 1.4, { step: 0.05, help: "Sits behind the head; phones use at least 90% of the width" }),
   }),
   motion: group("Motion", {
     smoothScroll: bool("Smooth scroll (desktop)", true),
