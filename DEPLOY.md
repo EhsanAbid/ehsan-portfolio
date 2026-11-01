@@ -9,6 +9,25 @@ Total time: about 30–45 minutes. You never need a credit card.
 
 ---
 
+## Before you start: keep it separate from your other site (ewuespc)
+
+The portfolio gets its **own** GitHub, Neon and Vercel accounts, signed up with a **different email**. Nothing is shared, so
+nothing you do here can touch the ewuespc site. Three habits keep it that way:
+
+1. **Use a separate browser profile** for the new accounts (Chrome: profile icon → **Add** → "Portfolio"). Sign up for
+   GitHub, Neon and Vercel *inside that profile*. Then "Sign in with GitHub" on Neon/Vercel can only pick the new GitHub account,
+   never the ewuespc one.
+2. **Push with your new username in the URL** (step 2). Git on this PC may remember the ewuespc login; putting the username in the
+   URL makes Git ask for (and remember) the new account separately. Your other project keeps its own login.
+3. **The database scripts check before writing.** `db:migrate` / `db:seed` print the database host and **stop** if that database
+   already contains tables from another project. If you ever see `STOPPED: this database already contains tables…`, you pasted
+   the wrong connection string. Nothing was changed; just fix the string.
+
+Never paste the portfolio's values into the ewuespc Vercel project (or the other way round). Each Vercel project has its own
+Environment Variables page.
+
+---
+
 ## 0. Test locally first (5 min)
 
 Right now the project uses a **local practice database** (PGlite, a real Postgres inside Node — no account needed).
@@ -31,7 +50,8 @@ Try: Admin → Content → change a tagline → **Publish** → reload the site.
 
 ## 1. Neon — create the database (10 min)
 
-1. Go to <https://neon.tech> → **Sign up** (log in with GitHub or Google is easiest). Free plan.
+1. In your **portfolio browser profile**, go to <https://neon.tech> → **Sign up** with the **new** email (or "Sign in with GitHub"
+   using the new GitHub account). Free plan. This is a brand-new Neon account, separate from the ewuespc one.
 2. **Create project** → name `ehsan-portfolio`, region **closest to Bangladesh** (e.g. *AWS Asia Pacific – Singapore*), Postgres version: default.
 3. Neon creates a branch called **main** — this will be the **live** database.
 4. Create a second branch for testing: left menu **Branches → New branch** → name `dev` (from `main`).
@@ -73,19 +93,30 @@ From now on use plain `npm run dev` (no local database needed). Check <http://lo
 
 ## 2. GitHub — store the code (5 min)
 
-1. On <https://github.com/new> create a repository, e.g. `ehsan-portfolio`. **Private** or public — both are fine.
+1. In your **portfolio browser profile**, sign up at <https://github.com/signup> with the new email.
+2. On <https://github.com/new> create a repository, e.g. `ehsan-portfolio`. **Private** or public — both are fine.
    Do **not** add a README, .gitignore or license (the project already has them).
-2. In the terminal (replace `YOUR-USERNAME`):
+3. In the terminal (replace `NEWUSER` **both times** with the new GitHub username):
 
 ```bash
-git remote add origin https://github.com/YOUR-USERNAME/ehsan-portfolio.git
+git remote add origin https://NEWUSER@github.com/NEWUSER/ehsan-portfolio.git
 ```
 
 ```bash
 git push -u origin main
 ```
 
-(If Git asks you to log in, a browser window opens — approve it.)
+A GitHub login window opens. Make sure it shows the **new** account (if it shows the ewuespc account, choose
+"switch account" / sign in with the new one), then approve. Git remembers this login only for `NEWUSER`, so the ewuespc
+repository keeps using its own login.
+
+If the push says `Permission denied to <your-ewuespc-username>`, Git used the old login: check that the remote URL contains
+`NEWUSER@` (`git remote -v`), fix it with `git remote set-url origin https://NEWUSER@github.com/NEWUSER/ehsan-portfolio.git`
+and push again.
+
+Optional: commits in this folder are signed with `ehsanahmedabid@gmail.com` (set for this folder only). If the new GitHub
+account uses a different email, either add that address in GitHub → Settings → Emails, or run
+`git config user.email "new@email.com"` in this folder. Your other projects are not affected.
 Your secrets are safe: `.env.local` is in `.gitignore` and is **never** uploaded. You can check with `git status` — it must not list `.env.local`.
 
 ---
@@ -119,7 +150,9 @@ You should see `published the default site version`. **After this, delete the `A
 
 ## 4. Vercel — put it online (10 min)
 
-1. Go to <https://vercel.com> → **Sign up with GitHub** (Hobby plan, free).
+1. In your **portfolio browser profile**, go to <https://vercel.com> → **Sign up** → **Continue with GitHub** (Hobby plan, free).
+   The GitHub window must show the **new** account. When Vercel asks to install its GitHub app, allow it for the new account
+   (only the `ehsan-portfolio` repository is enough).
 2. **Add New… → Project** → find `ehsan-portfolio` → **Import**. Framework is detected as **Next.js** — leave the build settings as they are.
 3. Open **Environment Variables** and add (for *Production*, *Preview* and *Development*):
 

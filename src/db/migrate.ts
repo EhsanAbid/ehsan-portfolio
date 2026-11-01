@@ -9,10 +9,11 @@ if (existsSync(envFile)) process.loadEnvFile(envFile);
 
 import { migrate } from "drizzle-orm/neon-http/migrator";
 import { getDb } from "./client";
+import { assertOwnDatabase } from "./guard";
 
 async function main() {
-  const host = new URL(process.env.DATABASE_URL ?? "postgresql://x@missing/x").hostname;
-  console.log(`[migrate] applying migrations to ${host} …`);
+  await assertOwnDatabase(getDb(), "migrate");
+  console.log("[migrate] applying migrations …");
   await migrate(getDb(), { migrationsFolder: "drizzle" });
   console.log("[migrate] done");
 }

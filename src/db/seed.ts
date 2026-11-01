@@ -16,6 +16,7 @@ if (existsSync(envFile)) process.loadEnvFile(envFile);
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "./client";
+import { assertOwnDatabase } from "./guard";
 import { buildDefaultSite } from "../schema/defaults";
 import { storeUpload, toRef, type StoredMedia } from "../lib/media";
 import type { Site } from "../schema/site";
@@ -103,8 +104,7 @@ async function seedContent(media: StoredMedia[]) {
 }
 
 async function main() {
-  const host = new URL(process.env.DATABASE_URL ?? "postgresql://x@missing/x").hostname;
-  console.log(`[seed] database: ${host}`);
+  await assertOwnDatabase(getDb(), "seed");
   await seedAdmin();
   const media = await seedAssets();
   await seedContent(media);
