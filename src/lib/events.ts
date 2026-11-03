@@ -1,3 +1,5 @@
+import { screenH } from "@/components/world/layout";
+
 /**
  * A tiny event bus between independent client islands (3D cards, panels, terminal).
  * Built on window CustomEvents, so islands never import each other.
@@ -20,7 +22,7 @@ export function on<K extends keyof EventMap>(name: K, fn: (detail: EventMap[K]) 
 
 /** Scroll to a position (in screens), through Lenis when smooth scrolling is on. */
 export function scrollToScreens(screens: number, immediate = false) {
-  const y = screens * innerHeight;
+  const y = screens * screenH();
   const lenis = (window as unknown as { __lenis?: { scrollTo: (t: number, o?: object) => void } }).__lenis;
   if (lenis) lenis.scrollTo(y, { immediate, duration: 1.6 });
   else scrollTo({ top: y, behavior: immediate || matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });

@@ -143,9 +143,12 @@ body {
 }
 
 /* Canvas + lines live behind everything; the canvas gets pointer events (hover/click) where nothing covers it. */
+/* 100lvh (the tallest the screen gets), not inset:0 — on phones the canvas would otherwise
+   resize, and WebGL re-allocate, every time the address bar slides in or out while scrolling. */
 .s-canvas {
   position: fixed;
-  inset: 0;
+  inset: 0 0 auto;
+  height: 100lvh;
   z-index: 0;
 }
 .s-canvas canvas {
@@ -153,7 +156,9 @@ body {
 }
 .s-static {
   position: fixed;
-  inset: 0;
+  inset: 0 0 auto;
+  width: 100%;
+  height: 100lvh;
   z-index: 0;
   pointer-events: none;
 }
@@ -449,6 +454,21 @@ html.s-fly .s-grid {
 }
 .s-end > * {
   pointer-events: auto;
+}
+/* WebGPU glow (EndGlow), behind the dark pool; fades out at the top and bottom edges */
+.s-end > .s-end-glow {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  transition: opacity 1.2s;
+  -webkit-mask-image: linear-gradient(transparent, #000 25%, #000 75%, transparent);
+  mask-image: linear-gradient(transparent, #000 25%, #000 75%, transparent);
+}
+.s-end-glow canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 .s-end h2 {
   font-family: var(--font-display);

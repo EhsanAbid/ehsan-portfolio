@@ -10,6 +10,9 @@
  * The two thresholds are far apart (40 vs 58) and raising waits longer than dropping:
  * that gap is *hysteresis*. Without it a phone hovering around 50 fps would flip between
  * tiers every second (visible flicker); with it the quality settles.
+ *  • The first seconds (and those after every change) are ignored: loading always stutters.
+ *  • A tier that was too slow once is never retried in this visit, so we can't cycle
+ *    high → medium → high → … forever.
  */
 
 export const TIERS = ["low", "medium", "high"] as const;
@@ -47,11 +50,20 @@ export function initialTier(): Tier {
   return score >= 3 ? "high" : score >= 1 ? "medium" : "low";
 }
 
+/** Ignore the first seconds after start and after a tier change (shader compile, texture upload). */
+const WARMUP_MS = 3000;
+/** A pause between two frames longer than this is a gap (paused loop, hidden tab), not slowness. */
+const GAP_MS = 250;
+
 export class FpsController {
   private frames = 0;
   private windowStart = 0;
+  private lastFrame = 0;
+  private quietUntil = 0;
   private belowFor = 0; // seconds spent under the drop threshold
   private aboveFor = 0; // seconds spent over the raise threshold
+  /** Highest tier we may climb back to: a tier that was too slow once is not retried. */
+  private ceiling = TIERS.length - 1;
   public fps = 60;
 
   constructor(
@@ -64,9 +76,22 @@ export class FpsController {
     this.cfg = cfg;
   }
 
+  /** Start a fresh measurement (after a pause, or while the page is still busy loading). */
+  private restart(now: number, quietMs = 0) {
+    this.frames = 0;
+    this.windowStart = now;
+    this.quietUntil = Math.max(this.quietUntil, now + quietMs);
+  }
+
   /** Call once per rendered frame with performance.now(). */
   tick(now: number) {
-    if (!this.windowStart) this.windowStart = now;
+    if (!this.lastFrame) this.restart(now, WARMUP_MS);
+    else if (now - this.lastFrame > GAP_MS) this.restart(now);
+    this.lastFrame = now;
+    if (now < this.quietUntil) {
+      this.restart(now);
+      return;
+    }
     this.frames++;
     const elapsed = (now - this.windowStart) / 1000;
     if (elapsed < this.cfg.windowSec) return;
@@ -89,13 +114,16 @@ export class FpsController {
     }
 
     const i = TIERS.indexOf(this.tier);
-    if (this.belowFor >= this.cfg.dropAfterSec && i > 0) this.set(TIERS[i - 1]);
-    else if (this.aboveFor >= this.cfg.raiseAfterSec && i < TIERS.length - 1) this.set(TIERS[i + 1]);
+    if (this.belowFor >= this.cfg.dropAfterSec && i > 0) {
+      this.ceiling = i - 1;
+      this.set(TIERS[i - 1], now);
+    } else if (this.aboveFor >= this.cfg.raiseAfterSec && i < this.ceiling) this.set(TIERS[i + 1], now);
   }
 
-  private set(t: Tier) {
+  private set(t: Tier, now: number) {
     this.tier = t;
     this.belowFor = this.aboveFor = 0;
+    this.restart(now, WARMUP_MS);
     this.onChange(t);
   }
 }

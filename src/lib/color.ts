@@ -6,6 +6,13 @@ export function hexToRgb(hex: string): [number, number, number] {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
+/** `t` of the way from colour a to colour b (0 = a, 1 = b), as #rrggbb. */
+export function mixHex(a: string, b: string, t: number) {
+  const A = hexToRgb(a);
+  const B = hexToRgb(b);
+  return `#${A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, "0")).join("")}`;
+}
+
 export function rgba(hex: string, alpha: number) {
   const [r, g, b] = hexToRgb(hex);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;

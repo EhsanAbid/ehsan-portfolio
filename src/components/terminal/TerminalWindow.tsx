@@ -144,7 +144,7 @@ export default function TerminalWindow({ data, onClose }: { data: TerminalData; 
             ✕
           </button>
         </div>
-        <div ref={scroller} className="mono flex-1 overflow-y-auto p-4 text-[0.85rem] leading-relaxed" onClick={() => input.current?.focus()} aria-live="polite">
+        <div ref={scroller} data-lenis-prevent className="mono flex-1 overflow-y-auto p-4 text-[0.85rem] leading-relaxed" onClick={() => input.current?.focus()} aria-live="polite">
           {lines.map((l, i) => (
             <p key={i} className={`whitespace-pre-wrap ${l.kind === "in" ? "text-fg" : l.kind === "err" ? "text-accent" : "text-fg-muted"}`}>
               {l.kind === "in" ? `${data.cfg.prompt} ${l.text}` : l.text}

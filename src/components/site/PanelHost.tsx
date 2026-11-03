@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { on, scrollToScreens } from "@/lib/events";
 import { cardProgress } from "@/components/world/layout";
+import { setWorld } from "@/components/world/store";
 
 /**
  * Opens and closes the glass panels. Panel links are normal `#about`-style links; with
@@ -21,6 +22,7 @@ export function PanelHost({ workIds, perWork }: { workIds: string[]; perWork: nu
       const target = id ? document.getElementById(id) : null;
       const isPanel = !!target?.hasAttribute("data-panel");
       panels().forEach((p) => (p === target && isPanel ? p.setAttribute("data-open", "") : p.removeAttribute("data-open")));
+      setWorld({ panel: isPanel });
       if (!isPanel) {
         lastFocus?.focus?.();
         lastFocus = null;

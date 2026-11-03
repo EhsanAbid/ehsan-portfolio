@@ -8,6 +8,7 @@ import { samplePortrait, type Sample } from "./sampler";
 import { setWorld, subscribeWorld, world } from "./store";
 import type { CardWork } from "./Cards";
 import { ATLAS_GRID, buildAtlas, type Atlas } from "./atlas";
+import { BLOCK_MIN, screenH } from "./layout";
 
 // three.js + react-three-fiber live in their own chunk, loaded when the browser is idle.
 const WorldCanvas = dynamic(() => import("./WorldCanvas"), { ssr: false });
@@ -35,8 +36,8 @@ function whenIdle(fn: () => void, timeout = 1200) {
  */
 function drawPoster(canvas: HTMLCanvasElement, sample: Sample, p: Site["effects"]["portrait"], atlas: Atlas | null) {
   const dpr = Math.min(devicePixelRatio, 2);
-  const W = innerWidth;
-  const H = innerHeight;
+  const W = canvas.clientWidth || innerWidth;
+  const H = canvas.clientHeight || innerHeight;
   canvas.width = Math.round(W * dpr);
   canvas.height = Math.round(H * dpr);
   const g = canvas.getContext("2d")!;
@@ -53,20 +54,21 @@ function drawPoster(canvas: HTMLCanvasElement, sample: Sample, p: Site["effects"
   const tileSize = atlas ? atlas.canvas.width / ATLAS_GRID : 0;
   let k = 0;
   for (const c of sample.cells) {
-    const s = cell * (1 - p.gap) * (0.45 + 0.55 * c.lum);
+    const s = cell * (1 - p.gap) * (BLOCK_MIN + (1 - BLOCK_MIN) * c.lum);
     const x = left + c.x * cell + (cell - s) / 2;
     const y = top + c.y * cell + (cell - s) / 2;
-    if (atlas) {
-      // same idea as the shader: a texture tile, darkened by the block's tone
+    // same idea as the shader: the block's tone first, the texture tile only as soft detail on top
+    const b = p.brightness * 255;
+    g.fillStyle = `rgb(${Math.min(255, c.r * b)},${Math.min(255, c.g * b)},${Math.min(255, c.b * b)})`;
+    g.fillRect(x, y, s, s);
+    if (atlas && p.texture > 0) {
       const pool = c.spark ? atlas.vivid : atlas.neutral;
       const t = pool[(k++ * 7919) % pool.length];
+      g.globalCompositeOperation = "soft-light";
+      g.globalAlpha = p.texture;
       g.drawImage(atlas.canvas, (t % ATLAS_GRID) * tileSize + 3, Math.floor(t / ATLAS_GRID) * tileSize + 3, tileSize - 6, tileSize - 6, x, y, s, s);
-      g.fillStyle = `rgba(0,0,0,${Math.max(0, 1 - (0.32 + c.lum * 1.55) * p.brightness)})`;
-      g.fillRect(x, y, s, s);
-    } else {
-      const b = p.brightness * 255;
-      g.fillStyle = `rgb(${Math.min(255, c.r * b)},${Math.min(255, c.g * b)},${Math.min(255, c.b * b)})`;
-      g.fillRect(x, y, s, s);
+      g.globalCompositeOperation = "source-over";
+      g.globalAlpha = 1;
     }
   }
 }
@@ -93,7 +95,12 @@ export function World({ photoKey, imageKeys, initials, effects, works, colors }:
     () => "pending|",
   );
   const [mode, tier] = snap.split("|") as ["pending" | "fly" | "static", Tier | ""];
-  const cols = tier ? effects.portrait.columns[tier] : null;
+  // The block count is picked once per visit from the first tier. Re-sampling on every tier
+  // change rebuilt the whole face (it visibly re-shuffled); now a tier change only adjusts the
+  // pixel ratio and the background dust.
+  const [startTier, setStartTier] = useState<Tier | "">("");
+  if (tier && !startTier) setStartTier(tier);
+  const cols = startTier ? effects.portrait.columns[startTier] : null;
   const staticMode = mode === "static";
   const sample = sampled?.sample ?? null;
 
@@ -124,6 +131,9 @@ export function World({ photoKey, imageKeys, initials, effects, works, colors }:
       photoKey,
       cols,
       crop: effects.portrait.crop,
+      sideCrop: effects.portrait.sideCrop,
+      // keep every block at least ~6 px tall on this screen (same height formula as the scene)
+      maxRows: Math.floor((screenH() * (innerWidth < 900 || innerWidth < screenH() ? 0.78 : 1) * effects.portrait.size) / 6),
       initials,
       fontFamily: font,
       palette: [effects.portrait.palette.a, effects.portrait.palette.b, effects.portrait.palette.c, effects.portrait.palette.d],
@@ -133,7 +143,7 @@ export function World({ photoKey, imageKeys, initials, effects, works, colors }:
     return () => {
       alive = false;
     };
-  }, [cols, photoKey, initials, effects.portrait.palette, effects.portrait.colourful, effects.portrait.crop, effects.portrait.mono]);
+  }, [cols, photoKey, initials, effects.portrait.palette, effects.portrait.colourful, effects.portrait.crop, effects.portrait.sideCrop, effects.portrait.mono, effects.portrait.size]);
 
   // Draw (and redraw on resize) the 2D poster until WebGL takes over.
   useEffect(() => {
@@ -150,7 +160,7 @@ export function World({ photoKey, imageKeys, initials, effects, works, colors }:
     let raf = 0;
     const update = () => {
       raf = 0;
-      const p = scrollY / innerHeight;
+      const p = scrollY / screenH();
       setWorld({ progress: p });
       document.documentElement.style.setProperty("--p", String(Math.min(p, 2).toFixed(4)));
     };

@@ -16,13 +16,15 @@ type State = {
   mode: "pending" | "fly" | "static";
   /** The device check has picked a tier (the poster can be drawn). */
   ready: boolean;
+  /** A glass panel is open (the scene may pause while nothing moves behind it). */
+  panel: boolean;
 };
 
 // Kept on globalThis so every copy of this module (the page bundle and the lazily loaded
 // 3D chunk can each end up with their own copy) shares ONE state object and listener set.
 const g = globalThis as unknown as { __siteWorld?: { state: State; listeners: Set<() => void> } };
 g.__siteWorld ??= {
-  state: { tier: "medium", progress: 0, focus: -1, pointer: null, mode: "pending", ready: false },
+  state: { tier: "medium", progress: 0, focus: -1, pointer: null, mode: "pending", ready: false, panel: false },
   listeners: new Set(),
 };
 const listeners = g.__siteWorld.listeners;

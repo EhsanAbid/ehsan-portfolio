@@ -157,6 +157,8 @@ const effectsSchema = group("Effects", {
     hoverRadius: num("Mouse ripple radius", 0.18, 0, 0.5, { step: 0.01, help: "Fraction of the portrait height" }),
     hoverPush: num("Mouse ripple strength", 1, 0, 3, { step: 0.1 }),
     crop: num("Use the top part of the photo", 0.62, 0.3, 1, { step: 0.02, help: "Lower = closer to your face (0.6 ≈ head and shoulders)" }),
+    sideCrop: num("Trim the photo's sides", 0.1, 0, 0.4, { step: 0.02, help: "Cut off each side so more blocks land on the face" }),
+    texture: num("Texture inside each block", 0.8, 0, 1, { step: 0.05, help: "0 = plain blocks. The texture never changes how light or dark a block is" }),
     size: num("Portrait height (share of the screen)", 0.9, 0.5, 1.3, { step: 0.05 }),
     offsetX: num("Desktop: shift right", 0.18, -0.4, 0.4, { step: 0.01 }),
   }),
@@ -181,6 +183,15 @@ const effectsSchema = group("Effects", {
     drawSec: num("Writing time", 4.5, 1.5, 12, { unit: "s", step: 0.5 }),
     holdSec: num("Stays visible for", 6, 1, 30, { unit: "s", step: 0.5 }),
     size: num("Size (share of screen width)", 0.55, 0.3, 1.4, { step: 0.05, help: "Sits behind the head; phones use at least 90% of the width" }),
+  }),
+  endGlow: group("End screen glow", {
+    enabled: bool("Slow moving glow behind the last screen", true, {
+      help: "WebGPU, desktops only (newer Chrome / Edge). Phones and other browsers keep the plain background.",
+    }),
+    strength: num("Strength", 0.55, 0.1, 1, { step: 0.05 }),
+    accent: num("Accent colour amount", 0.22, 0, 0.6, { step: 0.02 }),
+    speed: num("Speed", 0.25, 0, 2, { step: 0.05 }),
+    distortion: num("Flow", 0.6, 0, 2, { step: 0.1 }),
   }),
   motion: group("Motion", {
     smoothScroll: bool("Smooth scroll (desktop)", true),

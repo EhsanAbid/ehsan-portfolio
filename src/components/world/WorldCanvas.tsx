@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import type { Camera } from "three";
 import type { Site } from "@/schema/site";
@@ -45,8 +45,9 @@ class Rig {
     // ease toward the scroll target: smooth even with a mouse wheel that jumps
     this.z += (cameraZ(p, o.depth) - this.z) * Math.min(1, dt * 5);
     const ptr = world.pointer;
-    this.x += ((ptr ? ptr.x * 0.8 : 0) - this.x) * Math.min(1, dt * 2.5);
-    this.y += ((ptr ? ptr.y * 0.5 : 0) - this.y) * Math.min(1, dt * 2.5);
+    // a gentle lean only: a big one turns the face away and the relief makes it look scrambled
+    this.x += ((ptr ? ptr.x * 0.5 : 0) - this.x) * Math.min(1, dt * 2.5);
+    this.y += ((ptr ? ptr.y * 0.3 : 0) - this.y) * Math.min(1, dt * 2.5);
     camera.position.set(this.x, this.y, this.z);
     camera.lookAt(this.x * 0.3, this.y * 0.3, this.z - CAM0);
 
@@ -73,6 +74,31 @@ function CameraRig({ effects, count, onFirstFrame }: { effects: Site["effects"];
   return null;
 }
 
+/** How long the scroll must be still (with a panel open) before the scene stops drawing. */
+const SLEEP_AFTER_MS = 1500;
+
+/**
+ * The canvas renders "on demand": this keeps asking for the next frame — except while a glass
+ * panel covers the page and nothing moves. Then the last frame simply stays on screen, so the
+ * browser's backdrop blur (expensive!) isn't recomputed 60 times a second for a still image.
+ * Any change in the shared store (scroll, panel closed, tier) wakes it up again.
+ */
+function FrameDriver() {
+  const invalidate = useThree((s) => s.invalidate);
+  const still = useRef({ progress: -1, since: 0 });
+  useEffect(() => subscribeWorld(() => invalidate()), [invalidate]);
+  useFrame(() => {
+    const now = performance.now();
+    const s = still.current;
+    if (world.progress !== s.progress) {
+      s.progress = world.progress;
+      s.since = now;
+    }
+    if (!world.panel || now - s.since < SLEEP_AFTER_MS) invalidate();
+  });
+  return null;
+}
+
 function Scene({ sample, atlas, effects, works, colors, font, onFirstFrame, tier }: WorldProps & { tier: Tier }) {
   const size = useThree((s) => s.size);
   const narrow = size.width < 900 || size.width < size.height;
@@ -84,15 +110,19 @@ function Scene({ sample, atlas, effects, works, colors, font, onFirstFrame, tier
   }, [size.width, size.height, narrow, effects.portrait]);
 
   const fl = effects.flight;
+  const dust = effects.portrait.dust;
   return (
     <>
+      <FrameDriver />
       <CameraRig effects={effects} count={works.length} onFirstFrame={onFirstFrame} />
       {effects.portrait.enabled && (
         <Portrait
-          key={`${sample.cols}-${tier}-${frame.cx.toFixed(2)}-${frame.height.toFixed(2)}`}
+          // a tier change only changes the dust count and pixel ratio — no rebuild, no flicker
+          key={`${sample.cols}-${sample.rows}-${frame.cx.toFixed(2)}-${frame.height.toFixed(2)}`}
           sample={sample}
           atlas={atlas}
-          dust={effects.portrait.dust[tier]}
+          dust={dust[tier]}
+          dustMax={Math.max(dust.high, dust.medium, dust.low)}
           frame={frame}
           cfg={effects.portrait}
           depth={fl.fieldDepth}
@@ -133,7 +163,7 @@ export default function WorldCanvas(props: WorldProps) {
       <Canvas
         dpr={[1, dprCap]}
         camera={{ fov: FOV, near: 0.1, far: 200, position: [0, 0, CAM0] }}
-        frameloop={visible ? "always" : "never"}
+        frameloop={visible ? "demand" : "never"}
         gl={{ antialias: false, alpha: true, powerPreference: "high-performance", stencil: false }}
         onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
       >

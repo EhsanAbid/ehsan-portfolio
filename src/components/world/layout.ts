@@ -6,6 +6,16 @@
  *   face       face fully     card 0     card 1           end screen
  *   intact     broken apart   in focus   in focus
  */
+/**
+ * One "screen" in pixels. Not innerHeight: on phones that grows and shrinks while the address
+ * bar slides away during scrolling, which made the camera jump. The root element's height is
+ * the small viewport (the same as CSS `svh`, which the spacer uses) and stays put.
+ */
+export const screenH = () => document.documentElement.clientHeight || innerHeight;
+
+/** Size of the darkest face block relative to a fully lit one (smaller ones vanish between pixels). */
+export const BLOCK_MIN = 0.55;
+
 export const FLIGHT_FIRST = 1.35; // where the first card is in focus
 export const FLIGHT_TAIL = 0.65; // extra scroll after the last card
 

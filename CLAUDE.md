@@ -28,6 +28,7 @@ Ehsan asked (2026-10-31) for a redesign modelled on vadimcarazan.com. Built as o
 - Small Inter Tight top bar: logo (initials or uploaded) · Currently · Based in (live Dhaka time) · Navigation (Work, About, Contact). Huge italic Instrument Serif name at the bottom, letters rise in. Intro paragraph + "Explore the work" pill.
 - **Scroll** = the face shatters into a 3D field and the camera flies through it; **only real projects** (Admin → Content → Projects) fly in as cards (image or typographic title card), with a counter "003 · Title · 3 of N works". No projects → end screen "New work is on its way."
 - **Panels** (frosted glass): Work (selected + all), About (headline, story, education, learning, skills, journey, links, CV), Contact (form → Inbox), one per project. Hash URLs (#about, #work-<id>), Escape closes; `:target` fallback without JS.
+- **End screen glow**: slow WebGPU FlowingGradient (`shaders` package) behind the last screen (`EndGlow.tsx`); downloaded only near the end screen on desktops with a WebGPU adapter, removed when scrolled away.
 - Short logo loader (CSS-timed). Hidden terminal (backtick key) kept as an Easter egg. Removed: boot sequence, starfield/planets, HUD/level, achievements, comet cursor, sound.
 - Reduced motion / no WebGL / no JS: static 2D block poster + a normal project grid.
 - Layout constants shared by scene, spacer and counter: `src/components/world/layout.ts`. Shared runtime state: `world/store.ts` (on globalThis, so the page bundle and the lazy 3D chunk share one copy).
@@ -36,7 +37,7 @@ Ehsan asked (2026-10-31) for a redesign modelled on vadimcarazan.com. Built as o
 - **Dashboard**: unpublished-changes counter + Publish, missing-content checklist (every TODO_EHSAN), unread messages, visits, last published.
 - **Content**: Profile (name, currently, location + time zone, intro, portrait photo, logo, about headline + story, CV, education, learning), Projects (title, category, year, status, selected, summary, details, tags, cover + gallery, links — drag to reorder = flight order), Skills, Journey, Links, Labels. Rich text: bold, italic, links, lists.
 - **Design**: presets (Ink, Paper, Midnight, Forest), colour tokens (background, text, muted, accent, panel, signature line) + pickers + contrast checker (warn < 4.5:1), display/italic/body fonts from a curated free list, name size, radius, glass blur/opacity; live preview.
-- **Effects**: loader, block portrait (blocks per tier, gap, black & white amount, sparkle colours, depth, dust, brightness, shimmer, ripple, crop, size, offset), scroll flight, signature (path, opacity, timing, size), motion, quality-controller thresholds.
+- **Effects**: loader, block portrait (blocks per tier, gap, black & white amount, sparkle colours, depth, dust, brightness, shimmer, ripple, crop, side trim, texture, size, offset), scroll flight, end screen glow, signature (path, opacity, timing, size), motion, quality-controller thresholds.
 - **Terminal**: welcome, prompt, commands + every reply.
 - **Media**: upload images/PDFs; auto WebP + resize; required alt text; where-used; replace/delete.
 - **Inbox**: read/unread, reply via mailto, spam, delete, CSV export.
@@ -54,7 +55,7 @@ Motion: letters rise in, loader ≤ 1.3 s (0.45 s returning), portrait shatter +
 Tokens become CSS variables at render time → colour change needs no rebuild.
 
 ## Stack (all free — do not add others without asking)
-Next.js (16.x App Router, Cache Components) + TypeScript · Tailwind CSS v4 · three.js + @react-three/fiber + @react-three/drei (client-only, lazy) · GSAP + ScrollTrigger, Motion, Lenis · Neon serverless Postgres + @neondatabase/serverless · Drizzle ORM + drizzle-kit · Zod · bcrypt(js) + jose (signed httpOnly cookie) · dnd-kit, TipTap, react-colorful · sharp · media stored in Neon served via cached route · GitHub → Vercel Hobby.
+Next.js (16.x App Router, Cache Components) + TypeScript · Tailwind CSS v4 · three.js + @react-three/fiber + @react-three/drei (client-only, lazy) · GSAP + ScrollTrigger, Motion, Lenis · Neon serverless Postgres + @neondatabase/serverless · Drizzle ORM + drizzle-kit · Zod · bcrypt(js) + jose (signed httpOnly cookie) · dnd-kit, TipTap, react-colorful · sharp · shaders (WebGPU, only the end-screen glow: lazy, desktop + WebGPU only, telemetry off) · media stored in Neon served via cached route · GitHub → Vercel Hobby.
 
 ## DB tables (Drizzle, `src/db/schema.ts`)
 - `site_versions`: id, status (draft/published/archived), data JSONB (entire site), note, created_at, published_at
@@ -80,7 +81,7 @@ Name+buttons readable ≤ 1.5 s 4G (boot excluded) · LCP ≤ 2.5 s mobile · pu
 | Medium | 4000 | 2000 | 1.5 | no glow post |
 | Low | 1500 | 800 | 1.0 | no warp streaks, no comet trail |
 | Reduced motion | 0 (static) | static image | — | fades only |
-Initial tier from hardwareConcurrency, deviceMemory, screen size, touch. Feedback: avg FPS over 2 s window; drop one tier if < 40 fps for 2 s; raise only if > 58 fps for 5 s (hysteresis). Values admin-editable. Pause when tab hidden / canvas off-screen; no WebGL → static fallback.
+Initial tier from hardwareConcurrency, deviceMemory, screen size, touch. Feedback: avg FPS over 2 s window; drop one tier if < 40 fps for 2 s; raise only if > 58 fps for 5 s (hysteresis). Values admin-editable. Warm-up 3 s ignored; a tier that failed is never retried; block count fixed per visit (tier change = DPR + dust only, no rebuild). Pause when tab hidden or a panel is open and nothing moves; no WebGL → static fallback.
 
 ## Accessibility + SEO
 Semantic HTML, one h1, full keyboard nav, visible focus rings, canvases `aria-hidden`. Metadata, OG 1200×630, favicon, sitemap.xml, robots.txt, JSON-LD Person.

@@ -15,7 +15,8 @@ import { ContactForm } from "@/components/site/ContactForm";
 
 function Panel({ id, label, close, children }: { id: string; label: string; close: string; children: ReactNode }) {
   return (
-    <section id={id} className="s-panel" role="dialog" aria-label={label} data-panel>
+    // data-lenis-prevent: the wheel scrolls the panel's text, not the page (and the flight) behind it
+    <section id={id} className="s-panel" role="dialog" aria-label={label} data-panel data-lenis-prevent>
       <div className="s-panel-head">
         <a href="#_" className="s-close" data-close>
           <span aria-hidden>←</span> {close}

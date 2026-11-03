@@ -6,7 +6,7 @@ import { CanvasTexture, InstancedBufferAttribute, InstancedBufferGeometry, Plane
 import type { Site } from "@/schema/site";
 import { rng, type Sample } from "./sampler";
 import type { Atlas } from "./atlas";
-import { cameraZ, flightEnd } from "./layout";
+import { BLOCK_MIN, cameraZ, flightEnd } from "./layout";
 import { world } from "./store";
 
 /*
@@ -43,12 +43,14 @@ const vertex = /* glsl */ `
   varying vec2 vUv;
   varying float vAlpha;
   varying float vTile;
+  varying float vE;
 
   void main() {
     vTile = aTile;
     // staggered, eased progress for this block (smoothstep = soft start and stop)
     float e = clamp(uExplode * 1.4 - aSeed * 0.4, 0.0, 1.0);
     e = e * e * (3.0 - 2.0 * e);
+    vE = e;
     vec3 pos = mix(aStart, aEnd, e);
 
     // ripple: 1 at the pointer, 0 at the radius
@@ -64,8 +66,8 @@ const vertex = /* glsl */ `
     vec4 mv = modelViewMatrix * vec4(pos + vec3(position.xy * scale, 0.0), 1.0);
     gl_Position = projectionMatrix * mv;
 
-    float twinkle = 1.0 + uShimmer * 0.28 * sin(uTime * (0.4 + aSeed * 0.7) + aSeed * 57.0);
-    vColor = aColor * uBrightness * twinkle * (1.0 + h * 0.6);
+    float twinkle = 1.0 + uShimmer * 0.18 * sin(uTime * (0.4 + aSeed * 0.7) + aSeed * 57.0);
+    vColor = aColor * uBrightness * twinkle * (1.0 + h * 0.3);
     vUv = uv;
     // fade blocks that are about to hit the camera, and the far end of the field
     float depth = -mv.z;
@@ -80,6 +82,7 @@ const fragment = /* glsl */ `
   varying vec2 vUv;
   varying float vAlpha;
   varying float vTile;
+  varying float vE;
   void main() {
     // slightly rounded "thumbnail" corners
     vec2 q = abs(vUv - 0.5) * 2.0;
@@ -92,15 +95,28 @@ const fragment = /* glsl */ `
     float row = floor(vTile / 8.0);
     vec2 auv = vec2((col + vUv.x) / 8.0, 1.0 - (row + 1.0 - vUv.y) / 8.0);
     vec3 tex = texture2D(uAtlas, auv).rgb;
-    // The tile provides the detail, the block's tone sets how bright it is: a dark block shows a
-    // dim thumbnail, a lit block a bright one. Vivid tiles keep their own colours.
-    float tone = dot(vColor, vec3(0.299, 0.587, 0.114));
-    vec3 textured = tex * (0.32 + tone * 1.7);
+    // The tile only adds detail; the block's own tone decides how bright it is. (Multiplying the
+    // tone by the raw tile made a dark block with a bright tile look like a lit one, and the face
+    // dissolved into noise.) So the tile's pattern is a gentle ±28 % around the tone, and a
+    // colourful tile lends its hue, rescaled to that same tone.
+    vec3 W = vec3(0.299, 0.587, 0.114);
+    float tone = dot(vColor, W);
+    float l = dot(tex, W);
+    vec3 detail = vColor * (0.72 + 0.56 * l);
+    vec3 hue = min(tex / max(l, 0.08) * tone, vec3(1.0));
+    float chroma = max(tex.r, max(tex.g, tex.b)) - min(tex.r, min(tex.g, tex.b));
+    vec3 textured = mix(detail, hue, clamp(chroma * 1.2, 0.0, 0.7));
+    // Out in the field (vE → 1) the blocks are little "cards": there the full thumbnail shows.
+    vec3 card = tex * (0.32 + tone * 1.7);
+    textured = mix(textured, card, vE);
     gl_FragColor = vec4(mix(vColor, textured, uTex), a);
   }
 `;
 
 export type PortraitFrame = { cx: number; cy: number; height: number };
+
+/** Camera distance at the top of the page (see layout.cameraZ). */
+const CAM_START = cameraZ(0, 1);
 
 class BlockSim {
   pointer = new Vector3();
@@ -111,10 +127,17 @@ class BlockSim {
   geometry = new InstancedBufferGeometry();
 
   texture: CanvasTexture;
+  faceCount: number;
+  dustMax: number;
 
+  /** `dust` is the most dust blocks any tier may show; setDust() picks how many are drawn. */
   constructor(sample: Sample, frame: PortraitFrame, cfg: Site["effects"]["portrait"], fieldEnd: number, atlas: Atlas, dust: number) {
     const { cols, rows, cells } = sample;
     const n = cells.length + dust;
+    this.faceCount = cells.length;
+    this.dustMax = dust;
+    // Start where the scroll already is, so a rebuilt face doesn't re-assemble mid-flight.
+    this.explode = Math.min(1, Math.max(0, (world.progress - 0.02) / 0.98));
     const cell = frame.height / rows;
     const start = new Float32Array(n * 3);
     const end = new Float32Array(n * 3);
@@ -135,15 +158,22 @@ class BlockSim {
     const pickTile = (pool: number[]) => pool[Math.floor(rand() * pool.length)] ?? 0;
     for (let i = 0; i < cells.length; i++) {
       const c = cells[i];
-      start[i * 3] = frame.cx + (c.x - cols / 2 + 0.5) * cell;
-      start[i * 3 + 1] = frame.cy - (c.y - rows / 2 + 0.5) * cell;
       // Relief: lit blocks sit forward, shadows recede — the face reads as 3D when the camera moves.
-      start[i * 3 + 2] = (c.lum - 0.45) * cfg.relief * 1.8 + (rand() - 0.5) * 0.25 * cfg.relief;
+      const z = (c.lum - 0.45) * cfg.relief * 1.4 + (rand() - 0.5) * 0.06 * cfg.relief;
+      // Perspective makes a block that sits forward look bigger and pushes it away from the
+      // centre of the view. The face is off-centre, so lit and dark neighbours drifted up to a
+      // whole cell apart and the face looked scrambled. Shrinking each block's position and size
+      // by its distance cancels that exactly for the starting camera: at rest the face looks
+      // like the flat photo, and the depth only shows once the camera moves.
+      const k = (CAM_START - z) / CAM_START;
+      start[i * 3] = (frame.cx + (c.x - cols / 2 + 0.5) * cell) * k;
+      start[i * 3 + 1] = (frame.cy - (c.y - rows / 2 + 0.5) * cell) * k;
+      start[i * 3 + 2] = z;
       fieldPos(i);
       color.set([c.r, c.g, c.b], i * 3);
       seed[i] = rand();
       // Bright = full-size block, dark = small block: the face is "drawn" by block size too.
-      size[i] = cell * (1 - cfg.gap) * (0.45 + 0.55 * c.lum);
+      size[i] = cell * (1 - cfg.gap) * (BLOCK_MIN + (1 - BLOCK_MIN) * c.lum) * k;
       tile[i] = pickTile(c.spark ? atlas.vivid : atlas.neutral);
     }
     // Dust: a few hundred faint tiles floating behind the portrait (and joining the field later).
@@ -187,9 +217,13 @@ class BlockSim {
         uShimmer: { value: cfg.shimmer },
         uBrightness: { value: cfg.brightness },
         uAtlas: { value: this.texture },
-        uTex: { value: 0.9 },
+        uTex: { value: cfg.texture },
       },
     });
+  }
+
+  setDust(count: number) {
+    this.geometry.instanceCount = this.faceCount + Math.min(this.dustMax, count);
   }
 
   step(time: number, dt: number, camera: { position: Vector3 } & { projectionMatrixInverse: unknown }, unproject: (v: Vector3) => Vector3) {
@@ -230,9 +264,12 @@ export function Portrait({
   perWork,
   atlas,
   dust,
+  dustMax,
 }: {
   atlas: Atlas;
+  /** dust blocks drawn now (per tier) — changing it doesn't rebuild anything */
   dust: number;
+  dustMax: number;
   sample: Sample;
   frame: PortraitFrame;
   cfg: Site["effects"]["portrait"];
@@ -241,8 +278,9 @@ export function Portrait({
   perWork: number;
 }) {
   const fieldEnd = useMemo(() => cameraZ(flightEnd(count, perWork) + 1.2, depth) - 40, [count, perWork, depth]);
-  const [sim] = useState(() => new BlockSim(sample, frame, cfg, fieldEnd, atlas, dust));
+  const [sim] = useState(() => new BlockSim(sample, frame, cfg, fieldEnd, atlas, dustMax));
   useEffect(() => () => sim.dispose(), [sim]);
+  useEffect(() => sim.setDust(dust), [sim, dust]);
 
   useFrame((state, delta) =>
     sim.step(state.clock.elapsedTime, Math.min(delta, 0.05), state.camera as never, (v) => v.unproject(state.camera)),
