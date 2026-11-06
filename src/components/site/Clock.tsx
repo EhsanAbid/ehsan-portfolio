@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-/** Live local time for the top bar, e.g. "(17:59)". Rendered on the client only (the page is static). */
+/** Live local time for the top bar, e.g. "17:59". Rendered on the client only (the page is static). */
 export function Clock({ timeZone }: { timeZone: string }) {
   const [time, setTime] = useState("");
   useEffect(() => {
@@ -17,5 +17,5 @@ export function Clock({ timeZone }: { timeZone: string }) {
     const id = setInterval(tick, 15_000);
     return () => clearInterval(id);
   }, [timeZone]);
-  return <span className="tabular-nums">{time ? ` (${time})` : ""}</span>;
+  return <span className="tabular-nums">{time ? `, ${time}` : ""}</span>;
 }

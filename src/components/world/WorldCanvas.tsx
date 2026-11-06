@@ -7,8 +7,8 @@ import type { Site } from "@/schema/site";
 import { FpsController, type Tier } from "@/lib/fps";
 import type { Sample } from "./sampler";
 import type { Atlas } from "./atlas";
-import { Portrait, type PortraitFrame } from "./Portrait";
-import { Cards, type CardWork } from "./Cards";
+import { Portrait, type PortraitFrame, type Tints } from "./Portrait";
+import { Cards, type CardColors, type CardWork } from "./Cards";
 import { cameraZ, cardProgress } from "./layout";
 import { setWorld, subscribeWorld, world } from "./store";
 
@@ -22,7 +22,8 @@ export type WorldProps = {
   atlas: Atlas;
   effects: Site["effects"];
   works: CardWork[];
-  colors: { panel: string; text: string; muted: string };
+  colors: CardColors;
+  tints: Tints;
   font: string;
   onFirstFrame: () => void;
 };
@@ -99,7 +100,7 @@ function FrameDriver() {
   return null;
 }
 
-function Scene({ sample, atlas, effects, works, colors, font, onFirstFrame, tier }: WorldProps & { tier: Tier }) {
+function Scene({ sample, atlas, effects, works, colors, tints, font, onFirstFrame, tier }: WorldProps & { tier: Tier }) {
   const size = useThree((s) => s.size);
   const narrow = size.width < 900 || size.width < size.height;
   const frame: PortraitFrame = useMemo(() => {
@@ -123,6 +124,7 @@ function Scene({ sample, atlas, effects, works, colors, font, onFirstFrame, tier
           atlas={atlas}
           dust={dust[tier]}
           dustMax={Math.max(dust.high, dust.medium, dust.low)}
+          tints={tints}
           frame={frame}
           cfg={effects.portrait}
           depth={fl.fieldDepth}

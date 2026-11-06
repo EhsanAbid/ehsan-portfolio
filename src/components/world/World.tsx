@@ -9,6 +9,7 @@ import { setWorld, subscribeWorld, world } from "./store";
 import type { CardWork } from "./Cards";
 import { ATLAS_GRID, buildAtlas, type Atlas } from "./atlas";
 import { BLOCK_MIN, screenH } from "./layout";
+import { luminance, mixHex } from "@/lib/color";
 
 // three.js + react-three-fiber live in their own chunk, loaded when the browser is idle.
 const WorldCanvas = dynamic(() => import("./WorldCanvas"), { ssr: false });
@@ -20,7 +21,7 @@ export type WorldClientProps = {
   initials: string;
   effects: Site["effects"];
   works: CardWork[];
-  colors: { panel: string; text: string; muted: string };
+  colors: { bg: string; panel: string; panelText: string; panelMuted: string; text: string; upper: boolean };
 };
 
 function whenIdle(fn: () => void, timeout = 1200) {
@@ -79,15 +80,24 @@ export function World({ photoKey, imageKeys, initials, effects, works, colors }:
   const [live, setLive] = useState(false); // WebGL has drawn its first frame
   const [atlas, setAtlas] = useState<Atlas | null>(null);
   const keysSig = imageKeys.join(",");
+  const p = effects.portrait;
+  const paletteSig = [p.palette.a, p.palette.b, p.palette.c, p.palette.d].join(",");
+  // The face is printed in the page's own colours: shadows just above the background, lights in
+  // the text colour. (On a light page the two swap, so the photo never turns into a negative.)
+  const lightPage = luminance(colors.bg) > 0.5;
+  const tints = {
+    shadow: lightPage ? colors.text : mixHex(colors.bg, colors.text, 0.14),
+    light: lightPage ? mixHex(colors.bg, colors.text, 0.14) : colors.text,
+  };
 
   // Texture tiles for the blocks (project images + generated mini-thumbnails).
   useEffect(() => {
     let alive = true;
-    buildAtlas(keysSig ? keysSig.split(",") : []).then((a) => alive && setAtlas(a));
+    buildAtlas(keysSig ? keysSig.split(",") : [], paletteSig.split(",")).then((a) => alive && setAtlas(a));
     return () => {
       alive = false;
     };
-  }, [keysSig]);
+  }, [keysSig, paletteSig]);
   // Mode and tier live in the shared store; this re-renders only when one of them changes.
   const snap = useSyncExternalStore(
     subscribeWorld,
@@ -139,11 +149,13 @@ export function World({ photoKey, imageKeys, initials, effects, works, colors }:
       palette: [effects.portrait.palette.a, effects.portrait.palette.b, effects.portrait.palette.c, effects.portrait.palette.d],
       colourful: effects.portrait.colourful,
       mono: effects.portrait.mono,
+      shadow: tints.shadow,
+      light: tints.light,
     }).then((s) => alive && setSampled({ sample: s, font }));
     return () => {
       alive = false;
     };
-  }, [cols, photoKey, initials, effects.portrait.palette, effects.portrait.colourful, effects.portrait.crop, effects.portrait.sideCrop, effects.portrait.mono, effects.portrait.size]);
+  }, [cols, photoKey, initials, effects.portrait.palette, effects.portrait.colourful, effects.portrait.crop, effects.portrait.sideCrop, effects.portrait.mono, effects.portrait.size, tints.shadow, tints.light]);
 
   // Draw (and redraw on resize) the 2D poster until WebGL takes over.
   useEffect(() => {
@@ -238,7 +250,7 @@ export function World({ photoKey, imageKeys, initials, effects, works, colors }:
         }}
       />
       {mode === "fly" && sampled && atlas && (
-        <WorldCanvas sample={sampled.sample} atlas={atlas} effects={effects} works={works} colors={colors} font={sampled.font} onFirstFrame={onFirstFrame} />
+        <WorldCanvas sample={sampled.sample} atlas={atlas} effects={effects} works={works} colors={colors} tints={tints} font={sampled.font} onFirstFrame={onFirstFrame} />
       )}
     </>
   );

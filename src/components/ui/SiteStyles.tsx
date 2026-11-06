@@ -1,6 +1,6 @@
 import type { Site } from "@/schema/site";
 import { FONT_VARS } from "@/lib/fonts";
-import { luminance, rgba } from "@/lib/color";
+import { luminance, mixHex, rgba } from "@/lib/color";
 
 /** Turns the published design settings into CSS variables (no rebuild for a colour change). */
 export function designCss(site: Site) {
@@ -14,13 +14,18 @@ export function designCss(site: Site) {
     "--accent": c.accent,
     "--line": c.lines,
     "--panel-bg": rgba(c.panel, d.glassOpacity),
-    "--panel-border": light ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.09)",
+    "--panel-scheme": luminance(c.panel) > 0.5 ? "light" : "dark",
+    "--panel-fg": c.panelText,
+    "--panel-muted": mixHex(c.panelText, c.panel, 0.28),
+    "--panel-border": rgba(c.panelText, 0.16),
     "--radius": `${d.radius}px`,
     "--blur": `${d.glassBlur}px`,
     "--name-scale": String(d.nameSize),
-    "--font-display": `var(${FONT_VARS[d.fonts.display] ?? "--f-instrument"}), "Times New Roman", serif`,
+    "--font-display": `var(${FONT_VARS[d.fonts.display] ?? "--f-big-shoulders"}), "Arial Narrow", Impact, sans-serif`,
     "--display-style": d.fonts.displayItalic ? "italic" : "normal",
-    "--font-body": `var(${FONT_VARS[d.fonts.body] ?? "--f-inter-tight"}), ui-sans-serif, system-ui, sans-serif`,
+    "--display-weight": d.fonts.display === "Big Shoulders" ? "800" : "400",
+    "--display-case": d.fonts.displayUpper ? "uppercase" : "none",
+    "--font-body": `var(${FONT_VARS[d.fonts.body] ?? "--f-plex"}), ui-sans-serif, system-ui, sans-serif`,
   };
   const scheme = light ? "html{color-scheme:light}" : "";
   return `:root{${Object.entries(vars)

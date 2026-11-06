@@ -7,6 +7,7 @@ import { TerminalLauncher } from "@/components/terminal/TerminalLauncher";
 import { terminalData } from "@/components/terminal/terminalData";
 import { personJsonLd } from "@/lib/seo";
 import { filled } from "@/lib/todo";
+import { mixHex } from "@/lib/color";
 import { Loader, initialsOf } from "./Loader";
 import { TopBar } from "./TopBar";
 import { Hero } from "./Hero";
@@ -23,7 +24,7 @@ export function Maintenance({ site }: { site: Site }) {
     <div className="s-root flex min-h-screen flex-col justify-end p-6 md:p-8">
       <SiteStyles site={site} />
       <main>
-        <h1 className="s-name !translate-y-0 !whitespace-normal !text-[clamp(3rem,10vw,9rem)]">{m.title}</h1>
+        <h1 className="s-name">{m.title}</h1>
         <p className="s-label mt-4 max-w-xl">{m.message}</p>
       </main>
     </div>
@@ -83,7 +84,7 @@ export function SitePage({ site, preview = false, badge }: { site: Site; preview
           imageKey: w.image.key || null,
           aspect: w.image.width && w.image.height ? w.image.height / w.image.width : 0.75,
         }))}
-        colors={{ panel: c.panel, text: c.text, muted: c.muted }}
+        colors={{ bg: c.bg, panel: c.panel, panelText: c.panelText, panelMuted: mixHex(c.panelText, c.panel, 0.28), text: c.text, upper: site.design.fonts.displayUpper }}
       />
       <p className="sr-only">{site.copy.a11y.portrait}</p>
       <TopBar site={site} />

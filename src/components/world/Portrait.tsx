@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useFrame } from "@react-three/fiber";
-import { CanvasTexture, InstancedBufferAttribute, InstancedBufferGeometry, PlaneGeometry, SRGBColorSpace, ShaderMaterial, Vector3 } from "three";
+import { CanvasTexture, Color, InstancedBufferAttribute, InstancedBufferGeometry, PlaneGeometry, SRGBColorSpace, ShaderMaterial, Vector3 } from "three";
 import type { Site } from "@/schema/site";
 import { rng, type Sample } from "./sampler";
 import type { Atlas } from "./atlas";
@@ -78,6 +78,8 @@ const vertex = /* glsl */ `
 const fragment = /* glsl */ `
   uniform sampler2D uAtlas;
   uniform float uTex;
+  uniform vec3 uLow;
+  uniform vec3 uHigh;
   varying vec3 vColor;
   varying vec2 vUv;
   varying float vAlpha;
@@ -106,14 +108,17 @@ const fragment = /* glsl */ `
     vec3 hue = min(tex / max(l, 0.08) * tone, vec3(1.0));
     float chroma = max(tex.r, max(tex.g, tex.b)) - min(tex.r, min(tex.g, tex.b));
     vec3 textured = mix(detail, hue, clamp(chroma * 1.2, 0.0, 0.7));
-    // Out in the field (vE → 1) the blocks are little "cards": there the full thumbnail shows.
-    vec3 card = tex * (0.32 + tone * 1.7);
+    // Out in the field (vE → 1) the blocks are little "cards": the whole thumbnail shows, printed
+    // in the page's two colours; only strongly coloured tiles keep their own colour.
+    vec3 card = mix(mix(uLow, uHigh, l), tex, smoothstep(0.3, 0.7, chroma));
     textured = mix(textured, card, vE);
     gl_FragColor = vec4(mix(vColor, textured, uTex), a);
   }
 `;
 
 export type PortraitFrame = { cx: number; cy: number; height: number };
+/** The two colours the face is printed in (#rrggbb). */
+export type Tints = { shadow: string; light: string };
 
 /** Camera distance at the top of the page (see layout.cameraZ). */
 const CAM_START = cameraZ(0, 1);
@@ -131,7 +136,7 @@ class BlockSim {
   dustMax: number;
 
   /** `dust` is the most dust blocks any tier may show; setDust() picks how many are drawn. */
-  constructor(sample: Sample, frame: PortraitFrame, cfg: Site["effects"]["portrait"], fieldEnd: number, atlas: Atlas, dust: number) {
+  constructor(sample: Sample, frame: PortraitFrame, cfg: Site["effects"]["portrait"], fieldEnd: number, atlas: Atlas, dust: number, tints: Tints) {
     const { cols, rows, cells } = sample;
     const n = cells.length + dust;
     this.faceCount = cells.length;
@@ -146,6 +151,8 @@ class BlockSim {
     const size = new Float32Array(n);
     const tile = new Float32Array(n);
     const rand = rng(98765);
+    const low = new Color(tints.shadow).convertLinearToSRGB();
+    const high = new Color(tints.light).convertLinearToSRGB();
     const zNear = 4;
     const fieldPos = (i: number) => {
       // Field: a long tube around the flight path, empty in the middle so cards stay visible.
@@ -182,8 +189,8 @@ class BlockSim {
       start[i * 3 + 1] = (rand() - 0.5) * 44;
       start[i * 3 + 2] = -6 - rand() * 50;
       fieldPos(i);
-      const v = 0.12 + rand() * 0.3;
-      color.set([v, v, v], i * 3);
+      const v = 0.12 + rand() * 0.4;
+      color.set([low.r + (high.r - low.r) * v, low.g + (high.g - low.g) * v, low.b + (high.b - low.b) * v], i * 3);
       seed[i] = rand();
       size[i] = cell * (0.4 + rand() * 0.8);
       tile[i] = pickTile(rand() < 0.2 ? atlas.vivid : atlas.neutral);
@@ -218,6 +225,8 @@ class BlockSim {
         uBrightness: { value: cfg.brightness },
         uAtlas: { value: this.texture },
         uTex: { value: cfg.texture },
+        uLow: { value: low },
+        uHigh: { value: high },
       },
     });
   }
@@ -265,8 +274,10 @@ export function Portrait({
   atlas,
   dust,
   dustMax,
+  tints,
 }: {
   atlas: Atlas;
+  tints: Tints;
   /** dust blocks drawn now (per tier) — changing it doesn't rebuild anything */
   dust: number;
   dustMax: number;
@@ -278,7 +289,7 @@ export function Portrait({
   perWork: number;
 }) {
   const fieldEnd = useMemo(() => cameraZ(flightEnd(count, perWork) + 1.2, depth) - 40, [count, perWork, depth]);
-  const [sim] = useState(() => new BlockSim(sample, frame, cfg, fieldEnd, atlas, dustMax));
+  const [sim] = useState(() => new BlockSim(sample, frame, cfg, fieldEnd, atlas, dustMax, tints));
   useEffect(() => () => sim.dispose(), [sim]);
   useEffect(() => sim.setDust(dust), [sim, dust]);
 

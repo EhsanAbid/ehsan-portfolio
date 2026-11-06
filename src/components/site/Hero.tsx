@@ -9,10 +9,8 @@ import { ScrollLink } from "./ScrollLink";
  */
 function BigName({ name }: { name: string }) {
   let i = 0;
-  // Fit the name to the screen width: fewer letters → bigger type (italic serif ≈ 0.45 em per letter).
-  const fit = Math.min(15.8, 215 / Math.max(6, name.length));
   return (
-    <h1 className="s-name" style={{ "--fit": `${fit}vw` } as React.CSSProperties}>
+    <h1 className="s-name">
       <span className="sr-only">{name}</span>
       <span aria-hidden>
         {name.split(/\s+/).map((word, w) => (
@@ -36,19 +34,18 @@ export function Hero({ site }: { site: Site }) {
   return (
     <section id="top" className="s-hero" aria-label={p.name}>
       <div className="s-hero-inner">
-        <div className="s-hero-row">
-          <p className="s-intro">
-            {filled(p.intro) && <>{p.intro} </>}
-            <ScrollLink to={firstStop}>{site.copy.hero.scrollLink}</ScrollLink>
-          </p>
-          <ScrollLink to={firstStop} className="s-explore">
-            {site.copy.hero.explore}
-            <span className="s-explore-icon" aria-hidden>
-              ↓
-            </span>
-          </ScrollLink>
-        </div>
         <BigName name={p.name} />
+        <div className="s-hero-foot">
+          {filled(p.intro) && <p className="s-intro">{p.intro}</p>}
+          <div className="s-actions">
+            <ScrollLink to={firstStop} className="s-btn">
+              {site.copy.hero.explore}
+            </ScrollLink>
+            <a href="#contact" className="s-btn s-btn-ghost">
+              {site.copy.hero.contact}
+            </a>
+          </div>
+        </div>
       </div>
     </section>
   );

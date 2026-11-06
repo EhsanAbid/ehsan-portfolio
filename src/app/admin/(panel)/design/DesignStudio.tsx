@@ -20,7 +20,7 @@ function ContrastChecker({ d }: { d: Design }) {
   const panel = panelOver(c.bg, c.panel, d.glassOpacity);
   const pairs: [string, string, string][] = [
     ["Text on background", c.text, c.bg],
-    ["Text on glass panels", c.text, panel],
+    ["Text on panel sheets", c.panelText, panel],
     ["Secondary text on background", c.muted, c.bg],
     ["Secondary text on panels", c.muted, panel],
     ["Accent on background", c.accent, c.bg],

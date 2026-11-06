@@ -19,9 +19,9 @@ export type Atlas = {
   vivid: number[];
 };
 
-type Draw = (g: CanvasRenderingContext2D, w: number, h: number, r: () => number, vivid: boolean) => void;
+/** `v` holds the sparkle colours for a vivid tile, null for a grey one. */
+type Draw = (g: CanvasRenderingContext2D, w: number, h: number, r: () => number, v: string[] | null) => void;
 
-const VIVID = ["#4D7CFF", "#B15CFF", "#2EE6A8", "#FF8A3D", "#FF4D8D", "#36C5FF", "#F5D547"];
 const pick = <T,>(r: () => number, a: T[]) => a[Math.floor(r() * a.length)];
 const grey = (r: () => number, lo: number, hi: number) => {
   const v = Math.round((lo + r() * (hi - lo)) * 255);
@@ -34,11 +34,11 @@ const layouts: Draw[] = [
   (g, w, h, r, v) => {
     g.fillStyle = grey(r, 0.82, 0.95);
     g.fillRect(0, 0, w, h);
-    g.fillStyle = v ? pick(r, VIVID) : grey(r, 0.1, 0.3);
+    g.fillStyle = v ? pick(r, v) : grey(r, 0.1, 0.3);
     g.fillRect(0, 0, w, h * 0.16);
     g.fillStyle = grey(r, 0.45, 0.65);
     for (let i = 0; i < 3; i++) g.fillRect(w * 0.1, h * (0.3 + i * 0.12), w * (0.35 + r() * 0.3), h * 0.05);
-    g.fillStyle = v ? pick(r, VIVID) : grey(r, 0.55, 0.75);
+    g.fillStyle = v ? pick(r, v) : grey(r, 0.55, 0.75);
     g.fillRect(w * 0.55, h * 0.3, w * 0.35, h * 0.5);
   },
   // web page, dark with a button
@@ -50,7 +50,7 @@ const layouts: Draw[] = [
     g.fillStyle = grey(r, 0.35, 0.5);
     g.fillRect(w * 0.1, h * 0.45, w * 0.45, h * 0.05);
     g.fillRect(w * 0.1, h * 0.55, w * 0.35, h * 0.05);
-    g.fillStyle = v ? pick(r, VIVID) : grey(r, 0.85, 1);
+    g.fillStyle = v ? pick(r, v) : grey(r, 0.85, 1);
     g.beginPath();
     g.roundRect(w * 0.1, h * 0.7, w * 0.3, h * 0.12, h * 0.06);
     g.fill();
@@ -58,7 +58,7 @@ const layouts: Draw[] = [
   // photo-like: soft blurry blobs
   (g, w, h, r, v) => {
     const bg = g.createLinearGradient(0, 0, w, h);
-    bg.addColorStop(0, v ? pick(r, VIVID) : grey(r, 0.2, 0.5));
+    bg.addColorStop(0, v ? pick(r, v) : grey(r, 0.2, 0.5));
     bg.addColorStop(1, grey(r, 0.05, 0.3));
     g.fillStyle = bg;
     g.fillRect(0, 0, w, h);
@@ -67,7 +67,7 @@ const layouts: Draw[] = [
       const y = r() * h;
       const rad = w * (0.2 + r() * 0.35);
       const gr = g.createRadialGradient(x, y, 0, x, y, rad);
-      gr.addColorStop(0, v && r() < 0.5 ? pick(r, VIVID) : grey(r, 0.6, 1));
+      gr.addColorStop(0, v && r() < 0.5 ? pick(r, v) : grey(r, 0.6, 1));
       gr.addColorStop(1, "rgba(0,0,0,0)");
       g.fillStyle = gr;
       g.fillRect(0, 0, w, h);
@@ -75,7 +75,7 @@ const layouts: Draw[] = [
   },
   // poster: big shape on a flat colour
   (g, w, h, r, v) => {
-    g.fillStyle = v ? pick(r, VIVID) : grey(r, 0.06, 0.9);
+    g.fillStyle = v ? pick(r, v) : grey(r, 0.06, 0.9);
     g.fillRect(0, 0, w, h);
     g.fillStyle = grey(r, 0, 1);
     if (r() < 0.5) {
@@ -96,15 +96,15 @@ const layouts: Draw[] = [
     const n = 3;
     for (let y = 0; y < n; y++)
       for (let x = 0; x < n; x++) {
-        g.fillStyle = v && r() < 0.4 ? pick(r, VIVID) : grey(r, 0.15, 0.8);
+        g.fillStyle = v && r() < 0.4 ? pick(r, v) : grey(r, 0.15, 0.8);
         g.fillRect(w * (0.08 + x * 0.29), h * (0.08 + y * 0.29), w * 0.25, h * 0.25);
       }
   },
   // gradient card with a logo dot
   (g, w, h, r, v) => {
     const gr = g.createLinearGradient(0, h, w, 0);
-    gr.addColorStop(0, v ? pick(r, VIVID) : grey(r, 0.1, 0.4));
-    gr.addColorStop(1, v ? pick(r, VIVID) : grey(r, 0.5, 0.95));
+    gr.addColorStop(0, v ? pick(r, v) : grey(r, 0.1, 0.4));
+    gr.addColorStop(1, v ? pick(r, v) : grey(r, 0.5, 0.95));
     g.fillStyle = gr;
     g.fillRect(0, 0, w, h);
     g.fillStyle = grey(r, 0.9, 1);
@@ -119,13 +119,13 @@ const layouts: Draw[] = [
     g.fillRect(0, 0, w, h);
     for (let i = 0; i < 5; i++) {
       const bh = h * (0.2 + r() * 0.6);
-      g.fillStyle = v ? pick(r, VIVID) : grey(r, 0.4, 0.95);
+      g.fillStyle = v ? pick(r, v) : grey(r, 0.4, 0.95);
       g.fillRect(w * (0.1 + i * 0.17), h * 0.9 - bh, w * 0.11, bh);
     }
   },
   // grain / texture
   (g, w, h, r, v) => {
-    g.fillStyle = v ? pick(r, VIVID) : grey(r, 0.2, 0.7);
+    g.fillStyle = v ? pick(r, v) : grey(r, 0.2, 0.7);
     g.fillRect(0, 0, w, h);
     const img = g.getImageData(0, 0, w, h);
     for (let i = 0; i < img.data.length; i += 4) {
@@ -147,7 +147,7 @@ function loadImage(src: string) {
   });
 }
 
-export async function buildAtlas(imageKeys: string[]): Promise<Atlas> {
+export async function buildAtlas(imageKeys: string[], palette: string[]): Promise<Atlas> {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = ATLAS_GRID * TILE;
   const g = canvas.getContext("2d", { willReadFrequently: true })!;
@@ -181,7 +181,7 @@ export async function buildAtlas(imageKeys: string[]): Promise<Atlas> {
     g.beginPath();
     g.rect(0, 0, s, s);
     g.clip();
-    pick(r, layouts)(g, s, s, r, isVivid);
+    pick(r, layouts)(g, s, s, r, isVivid ? palette : null);
     g.restore();
     (isVivid ? vivid : neutral).push(i);
   }

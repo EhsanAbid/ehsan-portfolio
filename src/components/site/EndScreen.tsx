@@ -7,21 +7,21 @@ export function EndScreen({ site }: { site: Site }) {
   const f = site.copy.flight;
   const empty = site.works.length === 0;
   const g = site.effects.endGlow;
-  const { bg, panel, accent } = site.design.colors;
+  const { bg, text } = site.design.colors;
   return (
     <section className="s-end" aria-labelledby="end-title">
       {g.enabled && (
         <EndGlow
-          // dark page colours with a little accent: a quiet glow, not a light show
-          colors={[bg, mixHex(bg, accent, g.accent), mixHex(bg, panel, 0.9), mixHex(bg, accent, g.accent * 0.5)]}
+          // the page colour lifted a little toward the text colour: a quiet glow, not a light show
+          colors={[bg, mixHex(bg, text, g.accent), bg, mixHex(bg, text, g.accent * 0.5)]}
           strength={g.strength}
           speed={g.speed}
           distortion={g.distortion}
         />
       )}
       <h2 id="end-title">{empty ? f.emptyTitle : f.endTitle}</h2>
-      <p className="s-label mt-5 max-w-md text-[15px]">{empty ? f.emptyText : f.endText}</p>
-      <div className="mt-8 flex flex-wrap gap-3">
+      <p className="s-end-text">{empty ? f.emptyText : f.endText}</p>
+      <div className="s-actions">
         <a href="#contact" className="s-btn">
           {f.sayHello}
         </a>

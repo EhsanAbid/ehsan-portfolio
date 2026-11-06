@@ -50,10 +50,10 @@ export async function GET() {
           <img src={photo} alt="" width={520} height={590} style={{ position: "absolute", right: 60, top: 40, objectFit: "contain", opacity: 0.95 }} />
         )}
         <div style={{ display: "flex", flexDirection: "column", position: "absolute", left: 64, top: 56, fontSize: 24, color: c?.muted ?? "#A3A3A0" }}>
-          <span>{site?.copy.top.currently ?? ""}</span>
           <span style={{ color: c?.text ?? "#F2F2F0" }}>{site?.profile.currently ?? ""}</span>
+          <span>{site?.profile.location ?? ""}</span>
         </div>
-        <div style={{ display: "flex", position: "absolute", left: 56, bottom: 36, fontSize: 132, fontStyle: "italic", letterSpacing: -5, lineHeight: 0.9, fontFamily: "serif", maxWidth: 1100 }}>
+        <div style={{ display: "flex", position: "absolute", left: 56, bottom: 36, fontSize: 112, fontWeight: 700, letterSpacing: -3, lineHeight: 0.95, maxWidth: 680 }}>
           {name}
         </div>
       </div>

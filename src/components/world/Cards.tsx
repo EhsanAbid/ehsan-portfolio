@@ -8,6 +8,8 @@ import { rng } from "./sampler";
 import { CARD_AHEAD, cameraZ, cardProgress } from "./layout";
 import { world } from "./store";
 
+export type CardColors = { panel: string; panelText: string; panelMuted: string; upper: boolean };
+
 export type CardWork = {
   id: string;
   title: string;
@@ -25,40 +27,50 @@ function roundedMask() {
   g.fillRect(0, 0, 128, 128);
   g.fillStyle = "#fff";
   g.beginPath();
-  g.roundRect(0, 0, 128, 128, 7);
+  g.roundRect(0, 0, 128, 128, 2);
   g.fill();
   return new CanvasTexture(c);
 }
 
-/** Projects without an image fly in as a typographic card: the title in the display font. */
-function titleTexture(w: CardWork, colors: { panel: string; text: string; muted: string }, font: string) {
+/** Projects without an image fly in as a paper sheet: the title in the display font. */
+function titleTexture(w: CardWork, colors: CardColors, font: string) {
   const c = document.createElement("canvas");
   c.width = 1024;
   c.height = 768;
   const g = c.getContext("2d")!;
   g.fillStyle = colors.panel;
   g.fillRect(0, 0, c.width, c.height);
-  g.fillStyle = colors.muted;
-  g.font = `500 34px ${getComputedStyle(document.body).fontFamily}`;
-  g.fillText(w.category, 64, 96);
-  g.fillStyle = colors.text;
-  g.font = `italic 120px ${font}`;
-  // simple word wrap
-  const words = w.title.split(/\s+/);
-  let line = "";
-  let y = c.height - 80;
-  const lines: string[] = [];
-  for (const word of words) {
-    const test = line ? `${line} ${word}` : word;
-    if (g.measureText(test).width > c.width - 128 && line) {
-      lines.push(line);
-      line = word;
-    } else line = test;
-  }
-  lines.push(line);
-  lines.slice(-3).reverse().forEach((l) => {
+  g.fillStyle = colors.panelMuted;
+  g.font = `500 36px ${getComputedStyle(document.body).fontFamily}`;
+  g.fillText(w.category, 64, 100);
+  g.fillStyle = colors.panelText;
+  const title = colors.upper ? w.title.toUpperCase() : w.title;
+  const words = title.split(/\s+/);
+  // simple word wrap, at the largest size where the whole title fits on the card
+  const wrap = () => {
+    const lines: string[] = [];
+    let line = "";
+    for (const word of words) {
+      const test = line ? `${line} ${word}` : word;
+      if (g.measureText(test).width > c.width - 128 && line) {
+        lines.push(line);
+        line = word;
+      } else line = test;
+    }
+    lines.push(line);
+    return lines;
+  };
+  let size = 200;
+  let lines: string[];
+  do {
+    size -= 8;
+    g.font = `800 ${size}px ${font}`;
+    lines = wrap();
+  } while (size > 72 && lines.length * size * 0.94 > c.height - 200);
+  let y = c.height - 64;
+  [...lines].reverse().forEach((l) => {
     g.fillText(l, 64, y);
-    y -= 120;
+    y -= size * 0.94;
   });
   const t = new CanvasTexture(c);
   t.colorSpace = SRGBColorSpace;
@@ -73,20 +85,20 @@ class CardSet {
 
   constructor(
     works: CardWork[],
-    o: { perWork: number; depth: number; size: number; narrow: boolean; colors: { panel: string; text: string; muted: string }; font: string },
+    o: { perWork: number; depth: number; size: number; narrow: boolean; colors: CardColors; font: string },
   ) {
     const rand = rng(4242);
     const loader = new TextureLoader();
-    const width = (o.narrow ? 4.2 : 7.5) * o.size;
+    const width = (o.narrow ? 3.7 : 7.5) * o.size;
     works.forEach((w, i) => {
       const material = new MeshBasicMaterial({ transparent: true, toneMapped: false, alphaMap: this.mask, opacity: 0, depthWrite: false });
       const mesh = new Mesh(this.geometry, material);
+      mesh.renderOrder = 2; // drawn after the blocks, so nothing flies across the title
       const side = i % 2 === 0 ? -1 : 1;
-      const xAmp = o.narrow ? 0.9 : 4.2;
+      const xAmp = o.narrow ? 0 : 4.2; // phones: centred, a sideways offset would cut the card off
       mesh.position.set(side * xAmp * (0.6 + rand() * 0.4), (rand() - 0.5) * (o.narrow ? 1.6 : 2.6), cameraZ(cardProgress(i, o.perWork), o.depth) - CARD_AHEAD);
       mesh.scale.set(width, width * w.aspect, 1);
-      mesh.userData = { id: w.id, index: i, baseRot: (rand() - 0.5) * 0.12 };
-      mesh.rotation.z = mesh.userData.baseRot;
+      mesh.userData = { id: w.id, index: i };
       if (w.imageKey) {
         const tex = loader.load(`/media/${w.imageKey}?w=${o.narrow ? 640 : 960}`);
         tex.colorSpace = SRGBColorSpace;
@@ -104,22 +116,16 @@ class CardSet {
   }
 
   step(camZ: number, dt: number) {
-    const p = world.pointer;
     // cards only appear once the face has broken apart
     const gate = Math.min(1, Math.max(0, (world.progress - 0.75) / 0.3));
     for (const m of this.meshes) {
       const mat = m.material as MeshBasicMaterial;
       const dist = camZ - m.position.z; // > 0 when the card is ahead
-      // fade in from the far end, fade out just before it reaches the camera
-      const target = gate * (dist < 1 ? 0 : Math.min(1, (dist - 1) / 4) * (1 - Math.min(1, Math.max(0, (dist - 45) / 25))));
+      // fade in from the far end, and fade out well before the camera: a bright sheet passing
+      // close by would otherwise wash over the whole screen
+      const target = gate * (dist < 6 ? 0 : Math.min(1, (dist - 6) / 4) * (1 - Math.min(1, Math.max(0, (dist - 45) / 25))));
       mat.opacity += (target - mat.opacity) * Math.min(1, dt * 8);
       m.visible = mat.opacity > 0.01;
-      const focused = m.userData.index === world.focus;
-      // the focused card leans gently toward the mouse
-      const tx = focused && p ? -p.y * 0.12 : 0;
-      const ty = focused && p ? p.x * 0.18 : 0;
-      m.rotation.x += (tx - m.rotation.x) * Math.min(1, dt * 5);
-      m.rotation.y += (ty - m.rotation.y) * Math.min(1, dt * 5);
     }
   }
 
@@ -145,7 +151,7 @@ export function Cards({
   depth: number;
   size: number;
   narrow: boolean;
-  colors: { panel: string; text: string; muted: string };
+  colors: CardColors;
   font: string;
 }) {
   const opts = useMemo(() => ({ perWork, depth, size, narrow, colors, font }), [perWork, depth, size, narrow, colors, font]);

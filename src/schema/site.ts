@@ -28,16 +28,16 @@ const socialSchema = z.object({
 const profileSchema = group("Profile", {
   name: text("Full name (the big title)", "Ehsan Ahmed Abid"),
   shortName: text("Short name (terminal, small places)", "Ehsan"),
-  currently: text("Currently (top bar)", "CSE Student, East West University"),
+  currently: text("Currently (top bar)", "CSE student, East West University"),
   location: text("Based in (top bar)", "Dhaka, Bangladesh"),
   timezone: text("Time zone for the live clock (IANA name)", "Asia/Dhaka", { help: "e.g. Asia/Dhaka. The top bar shows your local time." }),
   intro: longText(
     "Intro (small paragraph above your name)",
-    "Computer Science & Engineering student at East West University in Dhaka, learning to build things for the web one project at a time.",
+    "Computer science student at East West University, Dhaka. I build full-stack web apps, including the tournament platform for the university's esports community.",
   ),
   photo: media("Portrait for the block face (PNG with transparent background works best)"),
   logo: media("Logo (optional — empty = your initials)"),
-  aboutHeadline: text("About: headline (big italic line)", "I'm Ehsan, a CSE student who likes turning ideas into things people can use."),
+  aboutHeadline: text("About: headline", "I build full-stack websites"),
   bio: rich("About: your story (3–5 sentences)"),
   cv: media("CV (PDF)", "pdf"),
   university: text("University", "East West University"),
@@ -97,30 +97,32 @@ const checkpointSchema = z.object({
 
 /* ───────────── Design ───────────── */
 
-export const DISPLAY_FONTS = ["Instrument Serif", "Playfair Display", "Fraunces", "Newsreader", "DM Serif Display"] as const;
-export const BODY_FONTS = ["Inter Tight", "Inter", "Manrope", "DM Sans", "Space Grotesk"] as const;
+export const DISPLAY_FONTS = ["Big Shoulders", "Instrument Serif", "Playfair Display", "Fraunces", "Newsreader", "DM Serif Display"] as const;
+export const BODY_FONTS = ["IBM Plex Sans", "Inter Tight", "Inter", "Manrope", "DM Sans", "Space Grotesk"] as const;
 
 const designSchema = group("Design", {
-  preset: select("Preset", ["ink", "paper", "midnight", "forest", "custom"] as const, "ink", {
-    optionLabels: { ink: "Ink (black)", paper: "Paper (light)", midnight: "Midnight blue", forest: "Forest", custom: "Custom" },
+  preset: select("Preset", ["cyanotype", "ink", "paper", "midnight", "forest", "custom"] as const, "cyanotype", {
+    optionLabels: { cyanotype: "Cyanotype (blueprint blue)", ink: "Ink (black)", paper: "Paper (light)", midnight: "Midnight blue", forest: "Forest", custom: "Custom" },
   }),
   colors: group("Colours", {
-    bg: color("Background", "#0A0A0A"),
-    text: color("Text", "#F2F2F0"),
-    muted: color("Secondary text", "#A3A3A0"),
-    accent: color("Accent (focus, highlights)", "#9DB8FF"),
-    panel: color("Glass panel tint", "#171717"),
+    bg: color("Background", "#12309A"),
+    text: color("Text", "#F5F7FC"),
+    muted: color("Secondary text", "#C3CEF0"),
+    accent: color("Accent (focus, highlights)", "#FFD166"),
+    panel: color("Panel sheet", "#EEF2F9"),
+    panelText: color("Text on panel sheets", "#0C1C5E"),
     lines: color("Signature line", "#FFFFFF"),
   }),
   fonts: group("Fonts", {
-    display: select("Big title font (serif)", DISPLAY_FONTS, "Instrument Serif"),
-    displayItalic: bool("Italic big title", true),
-    body: select("Text font", BODY_FONTS, "Inter Tight"),
+    display: select("Big title font", DISPLAY_FONTS, "Big Shoulders"),
+    displayItalic: bool("Italic big title", false),
+    displayUpper: bool("Capital letters in big titles", true),
+    body: select("Text font", BODY_FONTS, "IBM Plex Sans"),
   }),
   nameSize: num("Big name size", 1, 0.6, 1.4, { step: 0.05 }),
-  radius: num("Corner radius", 14, 0, 28, { unit: "px" }),
-  glassBlur: num("Glass blur", 34, 0, 60, { unit: "px" }),
-  glassOpacity: num("Glass opacity", 0.86, 0.3, 0.98, { step: 0.01 }),
+  radius: num("Corner radius", 3, 0, 28, { unit: "px" }),
+  glassBlur: num("Terminal window blur", 34, 0, 60, { unit: "px" }),
+  glassOpacity: num("Panel sheet opacity", 1, 0.3, 1, { step: 0.01 }),
 });
 
 /* ───────────── Effects ───────────── */
@@ -140,15 +142,15 @@ const effectsSchema = group("Effects", {
   }),
   portrait: group("Block portrait", {
     enabled: bool("Show the block portrait", true),
-    columns: tierCounts("Blocks across (per quality tier)", 150, 120, 96, 24, 200),
+    columns: tierCounts("Blocks across (per quality tier)", 150, 136, 124, 24, 200),
     gap: num("Gap between blocks", 0.22, 0, 0.6, { step: 0.02 }),
-    mono: num("Black & white (1 = fully grey, 0 = photo colours)", 0.9, 0, 1, { step: 0.05 }),
-    colourful: num("Coloured sparkle blocks", 0.2, 0, 1, { step: 0.05 }),
+    mono: num("Two-colour print (1 = page colours only, 0 = photo colours)", 1, 0, 1, { step: 0.05 }),
+    colourful: num("Coloured sparkle blocks", 0.05, 0, 1, { step: 0.01 }),
     palette: group("Sparkle colours", {
-      a: color("Colour A", "#4D7CFF"),
-      b: color("Colour B", "#B15CFF"),
-      c: color("Colour C", "#2EE6A8"),
-      d: color("Colour D", "#FF8A3D"),
+      a: color("Colour A", "#FFD166"),
+      b: color("Colour B", "#FFD166"),
+      c: color("Colour C", "#FFFFFF"),
+      d: color("Colour D", "#9FD4FF"),
     }),
     relief: num("3D depth of the face", 1, 0, 3, { step: 0.1 }),
     dust: tierCounts("Background dust (per quality tier)", 900, 600, 250, 0, 3000),
@@ -156,11 +158,11 @@ const effectsSchema = group("Effects", {
     shimmer: num("Shimmer", 0.5, 0, 1, { step: 0.05 }),
     hoverRadius: num("Mouse ripple radius", 0.18, 0, 0.5, { step: 0.01, help: "Fraction of the portrait height" }),
     hoverPush: num("Mouse ripple strength", 1, 0, 3, { step: 0.1 }),
-    crop: num("Use the top part of the photo", 0.62, 0.3, 1, { step: 0.02, help: "Lower = closer to your face (0.6 ≈ head and shoulders)" }),
+    crop: num("Use the top part of the photo", 0.54, 0.3, 1, { step: 0.02, help: "Lower = closer to your face (0.6 ≈ head and shoulders)" }),
     sideCrop: num("Trim the photo's sides", 0.1, 0, 0.4, { step: 0.02, help: "Cut off each side so more blocks land on the face" }),
     texture: num("Texture inside each block", 0.8, 0, 1, { step: 0.05, help: "0 = plain blocks. The texture never changes how light or dark a block is" }),
     size: num("Portrait height (share of the screen)", 0.9, 0.5, 1.3, { step: 0.05 }),
-    offsetX: num("Desktop: shift right", 0.18, -0.4, 0.4, { step: 0.01 }),
+    offsetX: num("Desktop: shift right", 0.2, -0.4, 0.4, { step: 0.01 }),
   }),
   flight: group("Scroll flight", {
     enabled: bool("Fly through the work on scroll", true),
@@ -189,7 +191,7 @@ const effectsSchema = group("Effects", {
       help: "WebGPU, desktops only (newer Chrome / Edge). Phones and other browsers keep the plain background.",
     }),
     strength: num("Strength", 0.55, 0.1, 1, { step: 0.05 }),
-    accent: num("Accent colour amount", 0.22, 0, 0.6, { step: 0.02 }),
+    accent: num("Glow amount", 0.14, 0, 0.6, { step: 0.02 }),
     speed: num("Speed", 0.25, 0, 2, { step: 0.05 }),
     distortion: num("Flow", 0.6, 0, 2, { step: 0.1 }),
   }),
@@ -251,54 +253,54 @@ const terminalSchema = group("Terminal", {
 
 const copySchema = group("Labels & micro-copy", {
   top: group("Top bar", {
-    currently: text("Currently label", "Currently:"),
-    based: text("Based-in label", "Based in:"),
-    navigation: text("Navigation label", "Navigation:"),
+    navigation: text("Navigation name (screen readers)", "Main navigation"),
     work: text("Work", "Work"),
     about: text("About", "About"),
     contact: text("Contact", "Contact"),
   }),
   hero: group("Hero", {
-    scrollLink: text("Scroll link (end of the intro)", "Scroll to fly through the work."),
-    explore: text("Explore button (bottom right)", "Explore the work"),
+    explore: text("Main button", "See my projects"),
+    contact: text("Second button", "Send a message"),
   }),
   flight: group("Scroll flight", {
     of: text("“3 of 12” word", "of"),
-    works: text("Works (plural)", "works"),
-    work: text("Work (singular)", "work"),
+    works: text("Projects (plural)", "projects"),
+    work: text("Project (singular)", "project"),
     open: text("Open a project", "Open project"),
-    elsewhere: text("Elsewhere label", "Elsewhere:"),
-    backHome: text("Back to top", "Back to home"),
-    emptyTitle: text("No projects yet: title", "New work is on its way."),
+    elsewhere: text("Elsewhere label", "Links"),
+    backHome: text("Back to top", "Back to top"),
+    emptyTitle: text("No projects yet: title", "Projects coming soon"),
     emptyText: text("No projects yet: text", "Projects appear here as soon as they're published."),
-    endTitle: text("End: title", "That's everything so far."),
-    endText: text("End: text", "There's more being built right now."),
-    sayHello: text("End: contact button", "Say hello"),
+    endTitle: text("End: title", "Internships and project work"),
+    endText: text("End: text", "Send me a message about an internship, a project or anything you saw here. I read every message."),
+    sayHello: text("End: contact button", "Send a message"),
   }),
   panels: group("Panels", {
     close: text("Close", "Close"),
     skills: text("Skills", "Skills"),
     learning: text("Currently learning", "Currently learning"),
-    journey: text("Journey", "Journey"),
+    journey: text("Journey", "Timeline"),
     education: text("Education", "Education"),
-    elsewhere: text("Elsewhere", "Elsewhere"),
+    elsewhere: text("Elsewhere", "Links"),
     contact: text("Contact", "Contact"),
+    email: text("Email", "Email"),
+    year: text("Year", "Year"),
+    type: text("Project type", "Type"),
     sendMessage: text("Send a message link", "Send me a message"),
     downloadCv: text("Download CV", "Download CV"),
-    selectedWork: text("Selected work", "Selected work"),
-    allWork: text("All work", "All work"),
-    noWork: text("No projects", "No projects yet — the first one is in progress."),
-    projectAbout: text("About the project", "About the project"),
+    allWork: text("Projects", "Projects"),
+    noWork: text("No projects", "No projects published yet."),
+    projectAbout: text("About the project", "What I built"),
     builtWith: text("Built with", "Built with"),
     links: text("Links", "Links"),
     github: text("GitHub button", "GitHub"),
-    live: text("Live button", "Visit live site"),
+    live: text("Live button", "Open live site"),
     inProgress: text("In progress badge", "In progress"),
-    backToWork: text("Back to the work", "Back to the work"),
+    backToWork: text("Back to the work", "All projects"),
   }),
   contact: group("Contact", {
-    headline: text("Headline", "Let's make something together."),
-    text: longText("Intro", "Questions, ideas, internships or just a hello — I read every message."),
+    headline: text("Headline", "Send me a message"),
+    text: longText("Intro", "Internships, project work or questions about what I've built. I read every message."),
     name: text("Name label", "Your name"),
     email: text("Email label", "Your email"),
     message: text("Message label", "Message"),
@@ -318,8 +320,8 @@ const copySchema = group("Labels & micro-copy", {
 /* ───────────── SEO & advanced ───────────── */
 
 const seoSchema = group("SEO & sharing", {
-  title: text("Page title", "Ehsan Ahmed Abid — CSE Student, East West University"),
-  description: longText("Description", "Portfolio of Ehsan Ahmed Abid, Computer Science & Engineering student at East West University in Dhaka."),
+  title: text("Page title", "Ehsan Ahmed Abid, full-stack web developer and CSE student in Dhaka"),
+  description: longText("Description", "Projects and contact details of Ehsan Ahmed Abid, a Computer Science & Engineering student at East West University in Dhaka who builds full-stack web apps."),
   keywords: tags("Keywords", ["Ehsan Ahmed Abid", "CSE", "East West University", "Dhaka", "portfolio"]),
   ogImage: media("Open Graph image (1200×630, empty = auto-generated)"),
   favicon: media("Favicon (square PNG, empty = default)"),
@@ -368,5 +370,23 @@ export type Social = Site["socials"][number];
 
 /** Parse anything into a valid Site, filling defaults. Throws on invalid data. */
 export function parseSite(data: unknown): Site {
-  return siteSchema.parse(data ?? {});
+  return siteSchema.parse(backfill(data ?? {}));
+}
+
+/**
+ * Versions saved before the cyanotype redesign have no "text on panel sheets" colour and no
+ * capitals setting. Their panels were dark, so the new default ink would be unreadable there:
+ * give them what they actually looked like (this also keeps History → Restore working).
+ */
+function backfill(data: unknown) {
+  const design = (data as { design?: { colors?: Record<string, unknown>; fonts?: Record<string, unknown> } }).design;
+  if (!design?.colors || design.colors.panelText) return data;
+  return {
+    ...(data as object),
+    design: {
+      ...design,
+      colors: { ...design.colors, panelText: design.colors.text },
+      fonts: { ...design.fonts, displayUpper: false },
+    },
+  };
 }

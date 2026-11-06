@@ -1,7 +1,9 @@
 import {
+  Big_Shoulders,
   DM_Sans,
   DM_Serif_Display,
   Fraunces,
+  IBM_Plex_Sans,
   Instrument_Serif,
   Inter,
   Inter_Tight,
@@ -19,8 +21,11 @@ import {
  * preloaded; the others are declared but a browser only downloads a font file
  * when a CSS rule actually uses it.
  */
-const instrument = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--f-instrument", display: "swap" });
-const interTight = Inter_Tight({ subsets: ["latin"], variable: "--f-inter-tight", display: "swap" });
+const bigShoulders = Big_Shoulders({ subsets: ["latin"], variable: "--f-big-shoulders", display: "swap", adjustFontFallback: false });
+const plex = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--f-plex", display: "swap" });
+
+const instrument = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--f-instrument", display: "swap", preload: false });
+const interTight = Inter_Tight({ subsets: ["latin"], variable: "--f-inter-tight", display: "swap", preload: false });
 
 const playfair = Playfair_Display({ subsets: ["latin"], style: ["normal", "italic"], variable: "--f-playfair", display: "swap", preload: false });
 const fraunces = Fraunces({ subsets: ["latin"], style: ["normal", "italic"], variable: "--f-fraunces", display: "swap", preload: false });
@@ -33,13 +38,15 @@ const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--f-space-gr
 // The hidden terminal (and the admin's code fields) use a monospace face.
 const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--f-jetbrains", display: "swap", preload: false });
 
-const all = [instrument, interTight, playfair, fraunces, newsreader, dmSerif, inter, manrope, dmSans, spaceGrotesk, jetbrains];
+const all = [bigShoulders, plex, instrument, interTight, playfair, fraunces, newsreader, dmSerif, inter, manrope, dmSans, spaceGrotesk, jetbrains];
 
 /** Class names that define every --f-* variable; put on <html>. */
 export const fontVariables = all.map((f) => f.variable).join(" ");
 
 /** Admin font name → CSS variable holding that font's family. */
 export const FONT_VARS: Record<string, string> = {
+  "Big Shoulders": "--f-big-shoulders",
+  "IBM Plex Sans": "--f-plex",
   "Instrument Serif": "--f-instrument",
   "Playfair Display": "--f-playfair",
   Fraunces: "--f-fraunces",

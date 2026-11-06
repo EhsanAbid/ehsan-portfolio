@@ -20,15 +20,16 @@ Resume after a stop: read this file + `PROGRESS.md`, check `git status` / `git l
 - Stop and ask only for: Neon dev connection string, admin email + first password (before seeding), any dependency not listed in the spec, final approval before pushing (Ehsan pushes himself).
 - Chat: one short line per finished phase.
 
-## Design v3 (current — replaces the original "Level-Up Universe" scenes)
-Ehsan asked (2026-10-31) for a redesign modelled on vadimcarazan.com. Built as our own implementation (no copied code/assets):
-- **Hero**: Ehsan's portrait rebuilt from thousands of small **textured blocks** (WebGL instancing, `src/components/world/`). Mostly black & white (tone from the photo, contrast-curved; bright = bigger + closer, shadows sparse), a few vivid "sparkle" blocks, faint background dust. Every block shows a tile from a texture atlas (`atlas.ts`): procedural mini-thumbnails + Ehsan's project images once he adds them. The real photo is never shown — only the blocks (and a pixelated B/W version in the OG image).
-- Mouse ripple pushes/brightens blocks; camera leans toward the mouse.
+## Design v4 "Cyanotype" (current — built 2026-11-06, keeps the block face and the flight from v3)
+One blueprint-blue page (the colour of Ehsan's suit), the face printed on it in two colours, and solid paper sheets for everything you read. Square corners and block-shaped buttons: the page is built from the same unit as the face.
+- **Hero**: Ehsan's portrait rebuilt from thousands of small **textured blocks** (WebGL instancing, `src/components/world/`). Two-colour print: tone comes from the photo (contrast-curved; bright = bigger + closer), shadows take the page colour, lights the text colour (`tints` in `World.tsx`; they follow Admin → Design). A few sparkle blocks in the palette colours, faint background dust. Every block shows a tile from a texture atlas (`atlas.ts`): procedural mini-thumbnails + Ehsan's project images once he adds them; the tile adds detail but never changes a block's tone, or the face dissolves. The real photo is never shown — only the blocks (and a pixelated B/W version in the OG image).
+- Relief is perspective-corrected: at rest the face matches the flat photo; depth shows only when the camera moves. Mouse ripple pushes/brightens blocks; camera leans gently toward the mouse.
 - **Signature**: Ehsan's own "Abid" (traced from `assets_input/source/signature.png`, redrawn thin → `signaturePath.ts`) is revealed left to right by a sliding SVG mask behind the head, holds, fades, repeats (`Signature.tsx`). Admin can paste another filled outline path.
-- Small Inter Tight top bar: logo (initials or uploaded) · Currently · Based in (live Dhaka time) · Navigation (Work, About, Contact). Huge italic Instrument Serif name at the bottom, letters rise in. Intro paragraph + "Explore the work" pill.
-- **Scroll** = the face shatters into a 3D field and the camera flies through it; **only real projects** (Admin → Content → Projects) fly in as cards (image or typographic title card), with a counter "003 · Title · 3 of N works". No projects → end screen "New work is on its way."
-- **Panels** (frosted glass): Work (selected + all), About (headline, story, education, learning, skills, journey, links, CV), Contact (form → Inbox), one per project. Hash URLs (#about, #work-<id>), Escape closes; `:target` fallback without JS.
-- **End screen glow**: slow WebGPU FlowingGradient (`shaders` package) behind the last screen (`EndGlow.tsx`); downloaded only near the end screen on desktops with a WebGPU adapter, removed when scrolled away.
+- Top bar: logo block (initials or uploaded) · what he does · place + live Dhaka time · Work, About, Contact. Name in Big Shoulders capitals: three tall lines on the left on desktop, two lines under the face on phones; letters rise in once on load. Intro paragraph + two buttons (See my projects, Send a message). IBM Plex Sans for all reading text.
+- **Scroll** = the face shatters into a 3D field and the camera flies through it; **only real projects** (Admin → Content → Projects) fly in as cards (image or paper title card), with "Open project" and "1 of N projects" at the bottom right. No projects → end screen "Projects coming soon".
+- **Panels** (solid paper sheets, no backdrop blur): Projects list, About (headline, story, then a fact list: education, learning, skills, timeline, links, CV), Contact (form → Inbox), one per project. Hash URLs (#about, #work-<id>), Escape closes; `:target` fallback without JS. `.s-panel` re-points `--fg/--bg/--accent`, so links, labels and buttons inside invert on their own.
+- **End screen**: "Internships and project work" + two buttons, with a slow WebGPU FlowingGradient (`shaders` package) behind it (`EndGlow.tsx`); downloaded only near the end screen on desktops with a WebGPU adapter, removed when scrolled away.
+- Copy is plain: says what he does and what each button does; nothing invented. No fake numbers, no slogans, no tilted cards, no reveal-on-scroll.
 - Short logo loader (CSS-timed). Hidden terminal (backtick key) kept as an Easter egg. Removed: boot sequence, starfield/planets, HUD/level, achievements, comet cursor, sound.
 - Reduced motion / no WebGL / no JS: static 2D block poster + a normal project grid.
 - Layout constants shared by scene, spacer and counter: `src/components/world/layout.ts`. Shared runtime state: `world/store.ts` (on globalThis, so the page bundle and the lazy 3D chunk share one copy).
@@ -36,7 +37,7 @@ Ehsan asked (2026-10-31) for a redesign modelled on vadimcarazan.com. Built as o
 ## Admin — Mission Control (`/admin`, schema-driven: forms generated from the Zod schema)
 - **Dashboard**: unpublished-changes counter + Publish, missing-content checklist (every TODO_EHSAN), unread messages, visits, last published.
 - **Content**: Profile (name, currently, location + time zone, intro, portrait photo, logo, about headline + story, CV, education, learning), Projects (title, category, year, status, selected, summary, details, tags, cover + gallery, links — drag to reorder = flight order), Skills, Journey, Links, Labels. Rich text: bold, italic, links, lists.
-- **Design**: presets (Ink, Paper, Midnight, Forest), colour tokens (background, text, muted, accent, panel, signature line) + pickers + contrast checker (warn < 4.5:1), display/italic/body fonts from a curated free list, name size, radius, glass blur/opacity; live preview.
+- **Design**: presets (Cyanotype, Ink, Paper, Midnight, Forest), colour tokens (background, text, muted, accent, panel sheet, text on panels, signature line) + pickers + contrast checker (warn < 4.5:1), display/body fonts from a curated free list, italic + capitals switches, name size, radius, panel opacity; live preview.
 - **Effects**: loader, block portrait (blocks per tier, gap, black & white amount, sparkle colours, depth, dust, brightness, shimmer, ripple, crop, side trim, texture, size, offset), scroll flight, end screen glow, signature (path, opacity, timing, size), motion, quality-controller thresholds.
 - **Terminal**: welcome, prompt, commands + every reply.
 - **Media**: upload images/PDFs; auto WebP + resize; required alt text; where-used; replace/delete.
@@ -49,8 +50,8 @@ Ehsan asked (2026-10-31) for a redesign modelled on vadimcarazan.com. Built as o
 - Honest limit: brand-new animation/section *kinds* are code (ask Claude Code); once built they appear in admin automatically via the schema.
 
 ## Design tokens (defaults, all editable)
-`--bg #0A0A0A` · `--fg` text · `--fg-muted` · `--accent #9DB8FF` · `--panel-bg #171717` (frosted glass) · `--line` (signature). Presets: Ink (default), Paper, Midnight, Forest.
-Fonts via next/font (self-hosted): Instrument Serif (display + italic name), Inter Tight (body/UI); more curated free fonts declared without preload.
+`--bg #12309A` · `--fg #F5F7FC` · `--fg-muted #C3CEF0` · `--accent #FFD166` · `--panel-bg #EEF2F9` + `--panel-fg #0C1C5E` (paper sheets) · `--line` (signature). Presets: Cyanotype (default), Ink, Paper, Midnight, Forest.
+Fonts via next/font (self-hosted): Big Shoulders (display, capitals), IBM Plex Sans (body/UI); more curated free fonts declared without preload.
 Motion: letters rise in, loader ≤ 1.3 s (0.45 s returning), portrait shatter + fly on scroll; no scroll-jacking. Reduced motion: static 2D block poster, project grid, fades only.
 Tokens become CSS variables at render time → colour change needs no rebuild.
 

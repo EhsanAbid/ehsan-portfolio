@@ -8,9 +8,9 @@ import { richToText } from "@/schema/rich";
 import { ContactForm } from "@/components/site/ContactForm";
 
 /*
- * Frosted-glass panels over the 3D scene. They are plain HTML in the page (search engines
- * and screen readers see everything); <PanelHost> opens them. Without JavaScript the
- * `:target` CSS rule opens them through the #about / #work / #contact links.
+ * Paper sheets over the 3D scene. They are plain HTML in the page (search engines and screen
+ * readers see everything); <PanelHost> opens them. Without JavaScript the `:target` CSS rule
+ * opens them through the #about / #work / #contact links.
  */
 
 function Panel({ id, label, close, children }: { id: string; label: string; close: string; children: ReactNode }) {
@@ -19,7 +19,10 @@ function Panel({ id, label, close, children }: { id: string; label: string; clos
     <section id={id} className="s-panel" role="dialog" aria-label={label} data-panel data-lenis-prevent>
       <div className="s-panel-head">
         <a href="#_" className="s-close" data-close>
-          <span aria-hidden>←</span> {close}
+          <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden>
+            <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.6" />
+          </svg>
+          {close}
         </a>
         <span className="s-label">{label}</span>
       </div>
@@ -32,16 +35,23 @@ const external = (url: string) => (/^https?:/.test(url) ? { target: "_blank", re
 
 function LinkList({ items }: { items: { label: string; url: string }[] }) {
   return (
-    <p>
-      {items.map((s, i) => (
-        <span key={s.url}>
-          <a href={s.url} className="s-link" {...external(s.url)}>
-            {s.label}
-          </a>
-          {i < items.length - 1 ? ", " : ""}
-        </span>
+    <span className="s-links">
+      {items.map((s) => (
+        <a key={s.url} href={s.url} className="s-link" {...external(s.url)}>
+          {s.label}
+        </a>
       ))}
-    </p>
+    </span>
+  );
+}
+
+/** One labelled row of a fact list (education, skills, links…). */
+function Fact({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div>
+      <dt>{label}</dt>
+      <dd>{children}</dd>
+    </div>
   );
 }
 
@@ -60,75 +70,50 @@ export function AboutPanel({ site }: { site: Site }) {
   return (
     <Panel id="about" label={site.copy.top.about} close={l.close}>
       <h2>{p.aboutHeadline}</h2>
-      {filled(richToText(p.bio)) && <RichText doc={p.bio} className="text-[15.5px]" />}
-      <div className="s-cols">
-        <div>
-          <h3>{l.education}</h3>
-          <p>
-            {p.department}
-            <br />
-            {p.university}
-            {filled(p.semester) && (
-              <>
-                <br />
-                {p.semester}
-              </>
-            )}
-          </p>
-        </div>
-        {learning.length > 0 && (
-          <div>
-            <h3>{l.learning}</h3>
-            <p>{learning.join(", ")}</p>
-          </div>
-        )}
-        <div>
-          <h3>{l.skills}</h3>
-          {groups
-            .filter(([, list]) => list.length)
-            .map(([label, list]) => (
-              <p key={label} className="mb-1.5">
-                <span className="s-label">{label}: </span>
-                {list.join(", ")}
-              </p>
-            ))}
-        </div>
+      {filled(richToText(p.bio)) && <RichText doc={p.bio} className="s-lead" />}
+      <dl className="s-facts">
+        <Fact label={l.education}>
+          {p.department}, {p.university}
+          {filled(p.semester) && <>. {p.semester}</>}
+        </Fact>
+        {learning.length > 0 && <Fact label={l.learning}>{learning.join(", ")}</Fact>}
+        {groups
+          .filter(([, list]) => list.length)
+          .map(([label, list]) => (
+            <Fact key={label} label={label}>
+              {list.join(", ")}
+            </Fact>
+          ))}
         {journey.length > 0 && (
-          <div>
-            <h3>{l.journey}</h3>
-            <ul className="space-y-1.5">
+          <Fact label={l.journey}>
+            <ol className="s-timeline">
               {journey.map((j) => (
                 <li key={j.id}>
-                  {filled(j.date) && <span className="s-label tabular-nums">{j.date} </span>}
-                  {j.title}
-                  {filled(j.description) && <span className="s-label"> — {j.description}</span>}
+                  {filled(j.date) && <span className="tabular-nums">{j.date}</span>}
+                  <span>
+                    <strong>{j.title}</strong>
+                    {filled(j.description) && <span className="s-label block">{j.description}</span>}
+                  </span>
                 </li>
               ))}
-            </ul>
-          </div>
+            </ol>
+          </Fact>
         )}
         {socials.length > 0 && (
-          <div>
-            <h3>{l.elsewhere}</h3>
+          <Fact label={l.elsewhere}>
             <LinkList items={socials} />
-          </div>
+          </Fact>
         )}
-        <div>
-          <h3>{l.contact}</h3>
-          <p>
-            <a href="#contact" className="s-link">
-              {l.sendMessage}
-            </a>
-            {p.cv.key && (
-              <>
-                <br />
-                <a href={mediaUrl(p.cv)} className="s-link" download>
-                  {l.downloadCv}
-                </a>
-              </>
-            )}
-          </p>
-        </div>
+      </dl>
+      <div className="s-actions">
+        <a href="#contact" className="s-btn">
+          {l.sendMessage}
+        </a>
+        {p.cv.key && (
+          <a href={mediaUrl(p.cv)} className="s-btn s-btn-ghost" download>
+            {l.downloadCv}
+          </a>
+        )}
       </div>
     </Panel>
   );
@@ -137,17 +122,15 @@ export function AboutPanel({ site }: { site: Site }) {
 function WorkRow({ w }: { w: Work }) {
   return (
     <a href={`#work-${w.id}`} className="s-row">
-      {w.image.key ? (
+      {w.image.key && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={`${mediaUrl(w.image)}?w=200`} alt="" className="s-thumb" loading="lazy" />
-      ) : (
-        <span className="s-thumb" aria-hidden />
       )}
-      <span>
-        <span className="s-row-title block">{w.title}</span>
-        <span className="s-label text-[13px]">{w.category}</span>
+      <span className="s-row-text">
+        <span className="s-row-title">{w.title}</span>
+        {filled(w.summary) && <span className="s-label block">{w.summary}</span>}
       </span>
-      <span className="s-label text-[13px] tabular-nums">{w.year}</span>
+      <span className="s-label tabular-nums">{w.year}</span>
     </a>
   );
 }
@@ -157,8 +140,8 @@ export const publishedWorks = (site: Site) => site.works.filter((w) => filled(w.
 export function WorkPanel({ site }: { site: Site }) {
   const l = site.copy.panels;
   const works = publishedWorks(site);
-  const featured = works.filter((w) => w.featured);
-  const byYear = [...works].sort((a, b) => (b.year || "").localeCompare(a.year || ""));
+  // selected projects first, then the rest; each group newest first
+  const sorted = [...works].sort((a, b) => Number(b.featured) - Number(a.featured) || (b.year || "").localeCompare(a.year || ""));
   return (
     <Panel id="work" label={site.copy.top.work} close={l.close}>
       {works.length === 0 ? (
@@ -168,19 +151,9 @@ export function WorkPanel({ site }: { site: Site }) {
         </>
       ) : (
         <>
-          {featured.length > 0 && (
-            <>
-              <h2>{l.selectedWork}</h2>
-              <div className="mb-10">
-                {featured.map((w) => (
-                  <WorkRow key={w.id} w={w} />
-                ))}
-              </div>
-            </>
-          )}
           <h2>{l.allWork}</h2>
-          <div>
-            {byYear.map((w) => (
+          <div className="s-rows">
+            {sorted.map((w) => (
               <WorkRow key={w.id} w={w} />
             ))}
           </div>
@@ -194,43 +167,46 @@ export function ProjectPanel({ site, w }: { site: Site; w: Work }) {
   const l = site.copy.panels;
   const images = [w.image, ...w.gallery].filter((m) => m.key);
   return (
-    <Panel id={`work-${w.id}`} label={[w.category, w.year].filter(Boolean).join(", ")} close={l.close}>
+    <Panel id={`work-${w.id}`} label={site.copy.top.work} close={l.close}>
       <h2>{w.title}</h2>
-      {w.status === "in-progress" && <p className="chip mb-4 !text-fg-muted">{l.inProgress}</p>}
-      {filled(w.summary) && <p className="text-[16px]">{w.summary}</p>}
+      {w.status === "in-progress" && <p className="s-badge">{l.inProgress}</p>}
+      {filled(w.summary) && <p className="s-lead">{w.summary}</p>}
+      {filled(w.live) && (
+        <div className="s-actions">
+          <a href={w.live} className="s-btn" {...external(w.live)}>
+            {l.live}
+          </a>
+          {filled(w.github) && (
+            <a href={w.github} className="s-btn s-btn-ghost" {...external(w.github)}>
+              {l.github}
+            </a>
+          )}
+        </div>
+      )}
       {images.length > 0 && (
-        <div className="mt-6 grid gap-3">
+        <div className="s-shots">
           {images.map((m) => (
-            <MediaImage key={m.key} media={m} className="w-full rounded-[calc(var(--radius)*0.6)]" sizes="(max-width: 900px) 100vw, 560px" />
+            <MediaImage key={m.key} media={m} className="w-full" sizes="(max-width: 900px) 100vw, 720px" />
           ))}
         </div>
       )}
-      <div className="s-cols">
-        {filled(richToText(w.details)) && (
-          <div className="col-span-full">
-            <h3>{l.projectAbout}</h3>
-            <RichText doc={w.details} />
-          </div>
+      {filled(richToText(w.details)) && (
+        <>
+          <h3>{l.projectAbout}</h3>
+          <RichText doc={w.details} />
+        </>
+      )}
+      <dl className="s-facts">
+        {filled(w.category) && <Fact label={l.type}>{w.category}</Fact>}
+        {filled(w.year) && <Fact label={l.year}>{w.year}</Fact>}
+        {w.tags.length > 0 && <Fact label={l.builtWith}>{w.tags.join(", ")}</Fact>}
+        {!filled(w.live) && filled(w.github) && (
+          <Fact label={l.links}>
+            <LinkList items={[{ label: l.github, url: w.github }]} />
+          </Fact>
         )}
-        {w.tags.length > 0 && (
-          <div>
-            <h3>{l.builtWith}</h3>
-            <p>{w.tags.join(", ")}</p>
-          </div>
-        )}
-        {(filled(w.github) || filled(w.live)) && (
-          <div>
-            <h3>{l.links}</h3>
-            <LinkList
-              items={[
-                ...(filled(w.live) ? [{ label: l.live, url: w.live }] : []),
-                ...(filled(w.github) ? [{ label: l.github, url: w.github }] : []),
-              ]}
-            />
-          </div>
-        )}
-      </div>
-      <p className="mt-8">
+      </dl>
+      <p className="s-back">
         <a href="#work" className="s-link">
           {l.backToWork}
         </a>
@@ -241,29 +217,28 @@ export function ProjectPanel({ site, w }: { site: Site; w: Work }) {
 
 export function ContactPanel({ site }: { site: Site }) {
   const c = site.copy.contact;
+  const l = site.copy.panels;
   const p = site.profile;
   const socials = site.socials.filter((s) => filled(s.url) && s.kind !== "email");
   return (
-    <Panel id="contact" label={site.copy.top.contact} close={site.copy.panels.close}>
+    <Panel id="contact" label={site.copy.top.contact} close={l.close}>
       <h2>{c.headline}</h2>
-      <p className="s-label mb-6">{c.text}</p>
+      <p className="s-lead">{c.text}</p>
       <ContactForm labels={c} />
-      <div className="s-cols">
+      <dl className="s-facts">
         {filled(p.publicEmail) && (
-          <div>
-            <h3>Email</h3>
+          <Fact label={l.email}>
             <a href={`mailto:${p.publicEmail}`} className="s-link">
               {p.publicEmail}
             </a>
-          </div>
+          </Fact>
         )}
         {socials.length > 0 && (
-          <div>
-            <h3>{site.copy.panels.elsewhere}</h3>
+          <Fact label={l.elsewhere}>
             <LinkList items={socials} />
-          </div>
+          </Fact>
         )}
-      </div>
+      </dl>
     </Panel>
   );
 }

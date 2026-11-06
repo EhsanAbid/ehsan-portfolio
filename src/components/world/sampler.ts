@@ -51,9 +51,11 @@ function hexToRgb01(hex: string): [number, number, number] {
   return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
 }
 
-function readCells(ctx: CanvasRenderingContext2D, cols: number, rows: number, o: { palette: string[]; colourful: number; mono: number }): Sample {
+function readCells(ctx: CanvasRenderingContext2D, cols: number, rows: number, o: { palette: string[]; colourful: number; mono: number; shadow: string; light: string }): Sample {
   const data = ctx.getImageData(0, 0, cols, rows).data;
   const pal = o.palette.map(hexToRgb01);
+  const lo = hexToRgb01(o.shadow);
+  const hi = hexToRgb01(o.light);
   const rand = rng(1234);
   const cells: Cell[] = [];
   for (let y = 0; y < rows; y++) {
@@ -65,17 +67,17 @@ function readCells(ctx: CanvasRenderingContext2D, cols: number, rows: number, o:
       const pb = data[i + 2] / 255;
       // Brightness, then an S-curve for more contrast, so the lit side of the face is bright and
       // the shadows fall away — like a sculpted bust. Plain luminance counts strong blue as almost
-      // black (a blue jacket would vanish), so half of it is the brightest channel instead.
+      // black (a blue jacket would vanish), so a quarter of it is the brightest channel instead.
       const luma = 0.2126 * pr + 0.7152 * pg + 0.0722 * pb;
-      const raw = 0.5 * luma + 0.5 * Math.max(pr, pg, pb);
+      const raw = 0.75 * luma + 0.25 * Math.max(pr, pg, pb);
       let t = Math.min(1, Math.max(0, (raw - 0.04) / 0.85));
       t = t * t * (3 - 2 * t);
       // Deep shadows: mostly empty, with a few dim blocks so the outline still reads.
-      if (t < 0.06 && rand() > 0.45) continue;
-      // Black & white: blend the photo colour toward its grey value.
-      let r = pr * (1 - o.mono) + t * o.mono;
-      let g = pg * (1 - o.mono) + t * o.mono;
-      let b = pb * (1 - o.mono) + t * o.mono;
+      if (t < 0.06 && rand() > 0.8) continue;
+      // Two-colour print: shadows take the page's colour, lights the text colour (like a cyanotype).
+      let r = pr * (1 - o.mono) + (lo[0] + (hi[0] - lo[0]) * t) * o.mono;
+      let g = pg * (1 - o.mono) + (lo[1] + (hi[1] - lo[1]) * t) * o.mono;
+      let b = pb * (1 - o.mono) + (lo[2] + (hi[2] - lo[2]) * t) * o.mono;
       // Colour sparkles: a few lit blocks borrow a palette colour, rescaled to the block's own
       // brightness, so they add colour without changing the face's light and shadow.
       const spark = pal.length > 0 && t > 0.25 && rand() < o.colourful;
@@ -87,10 +89,6 @@ function readCells(ctx: CanvasRenderingContext2D, cols: number, rows: number, o:
         g = g * (1 - k) + Math.min(1, p[1] * scale) * k;
         b = b * (1 - k) + Math.min(1, p[2] * scale) * k;
       }
-      // Lift the darkest blocks slightly so they're visible on a black page.
-      r = 0.08 + r * 0.92;
-      g = 0.08 + g * 0.92;
-      b = 0.09 + b * 0.91;
       cells.push({ x, y, r, g, b, lum: t, spark });
     }
   }
@@ -111,6 +109,9 @@ export async function samplePortrait(opts: {
   palette: string[];
   colourful: number;
   mono: number;
+  /** Block colours for the darkest and brightest parts of the photo. */
+  shadow: string;
+  light: string;
 }): Promise<Sample> {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
